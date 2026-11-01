@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>StudioMate</title>
+  <meta name="description" content="A personal work assistant for interior designers: follow-ups, inspiration, material samples and trusted people near your sites.">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f0f0e" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="tabs" aria-label="Sections">
+    <div class="mark"><img src="icon-192.png" alt=""><span>StudioMate</span></div>
+    <a href="#today" data-tab="today" data-ic="today">Today</a>
+    <a href="#followups" data-tab="followups" data-ic="bell">Follow-ups</a>
+    <a href="#library" data-tab="library" data-ic="image">Library</a>
+    <a href="#materials" data-tab="materials" data-ic="swatch">Materials</a>
+    <a href="#people" data-tab="people" data-ic="pin">People</a>
+    <button class="nav-settings" data-act="settings" data-ic="cog">Settings</button>
+  </nav>
+
+  <header class="top">
+    <div class="mark"><img src="icon-192.png" alt=""><span>StudioMate</span></div>
+    <button class="icon-btn" aria-label="Settings" data-act="settings" data-ic="cog"></button>
+  </header>
+
+  <main id="view"></main>
+
+  <div id="sheet" class="sheet hidden">
+    <div class="sheet-bg"></div>
+    <div class="sheet-card" role="dialog" aria-modal="true"></div>
+  </div>
+  <div id="present" class="present hidden"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
