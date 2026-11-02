@@ -76,17 +76,18 @@ const I = {
   user: svg('<circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/>'),
   heart: svg('<path d="M12 19.5s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 7a4.2 4.2 0 0 1 7.5 2.5c0 5.4-7.5 10-7.5 10z"/>'),
   search: svg('<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/>'),
+  cube: svg('<path d="M12 3.5 19.5 7.7v8.6L12 20.5l-7.5-4.2V7.7z"/><path d="M4.5 7.7 12 12l7.5-4.3M12 12v8.5"/>'),
 };
 
 const STAR = '<svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.5 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 17l-5.4 3 1.2-6-4.5-4.2 6.1-.7z"/></svg>';
 
 /* ================= storage (IndexedDB) ================= */
-const STORES = ['contacts', 'sites', 'followups', 'library', 'materials', 'sessions', 'inbox', 'meta', 'decisions', 'boards'];
+const STORES = ['contacts', 'sites', 'followups', 'library', 'materials', 'sessions', 'inbox', 'meta', 'decisions', 'boards', 'designs'];
 const DB = {
   db: null,
   open() {
     return new Promise((res, rej) => {
-      const r = indexedDB.open('studiomate', 2);
+      const r = indexedDB.open('studiomate', 3);
       r.onupgradeneeded = () => { for (const s of STORES) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
       r.onsuccess = () => { this.db = r.result; res(); };
       r.onerror = () => rej(r.error);
@@ -326,7 +327,7 @@ const views = { today: vToday, followups: vFollowups, library: vLibrary, materia
 function render(focusId) {
   const [name, arg] = (location.hash.slice(1).split('?')[0] || 'today').split('/');
   cur = views[name] ? name : 'today';
-  const tab = { site: 'people', board: 'library' }[cur] || cur;
+  const tab = { site: 'people', board: 'library', materials: 'library' }[cur] || cur;
   $$('.tabs a').forEach(a => a.classList.toggle('on', a.dataset.tab === tab));
   const el = $('#view');
   views[cur](el, arg && decodeURIComponent(arg));

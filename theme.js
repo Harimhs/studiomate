@@ -3,7 +3,7 @@
    Today = sage, Follow-ups = terracotta, Library = walnut, Materials = ochre stone, People = teal.
    Loaded last; it only decorates what app.js and features.js render. */
 
-const SCREEN_OF = { today: 'today', followups: 'followups', library: 'library', board: 'library', materials: 'materials', people: 'people', site: 'site' };
+const SCREEN_OF = { today: 'today', followups: 'followups', library: 'library', board: 'library', materials: 'library', people: 'people', site: 'site', design: 'design' };
 
 /* line drawings from the trade: plan, lamp and chair, arched window, swatch fan, house */
 const art = (d) => `<svg class="motif" viewBox="0 0 160 120" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
@@ -26,6 +26,8 @@ const MOTIF = {
     <rect x="46" y="76" width="14" height="14" rx="1"/><rect x="100" y="76" width="14" height="14" rx="1"/>
     <path d="M128 40c0-9 7-16 16-16s16 7 16 16c0 12-16 26-16 26s-16-14-16-26z"/><circle class="f2" cx="144" cy="40" r="5"/><path d="M8 112h146"/>`),
 };
+MOTIF.design = art(`<path class="f" d="M80 18 128 44 80 70 32 44z"/><path d="M80 18 128 44v48L80 118 32 92V44z"/><path d="M32 44l48 26 48-26M80 70v48"/>
+    <path d="M24 50v48M20 50h8M20 98h8" /><path d="M86 122l42-24M84 118l4 7M126 94l4 7"/><circle cx="140" cy="22" r="10"/><path d="M140 6v8M140 30v8M124 22h8M148 22h8"/>`);
 MOTIF.site = MOTIF.today;
 
 /* room icons for decisions */

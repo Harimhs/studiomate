@@ -594,3 +594,94 @@ body[data-screen="people"]    { --hue: #2f7676; --hue-soft: #dcebea; --hue-mid: 
 .band .title-row .btn.primary { align-self: flex-start; }
 .band:has(.title-row) .motif { top: auto; bottom: 10px; width: 140px; }
 @media (min-width: 900px) { .band:has(.title-row) .motif { width: 220px; bottom: 16px; } }
+
+/* ================= Design studio: blueprint blue ================= */
+body[data-screen="design"] { --hue: #3f5f86; --hue-soft: #dfe7f1; --hue-mid: #bccce0; --hue-ink: #1f3552; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) body[data-screen="design"] { --hue: #8fb0d8; --hue-soft: #17212e; --hue-mid: #223247; --hue-ink: #cfdcee; }
+}
+/* drafting paper: a faint grid inside every header band */
+.band { background-image: /* taste-skill-ignore: drafting grid, the subject's own paper */
+  linear-gradient(color-mix(in srgb, var(--hue-ink) 7%, transparent) 1px, transparent 1px), /* taste-skill-ignore */
+  linear-gradient(90deg, color-mix(in srgb, var(--hue-ink) 7%, transparent) 1px, transparent 1px); /* taste-skill-ignore */
+  background-size: 20px 20px; background-position: -1px -1px; }
+
+.lib-seg { margin: 0 0 14px; }
+
+.rooms { display: grid; gap: 10px; }
+@media (min-width: 700px) { .rooms { grid-template-columns: 1fr 1fr; } }
+.room-card { display: grid; grid-template-columns: 96px 1fr; gap: 14px; align-items: center; padding: 10px; border-radius: var(--radius-card);
+  background: var(--surface); color: var(--text); text-decoration: none; }
+.room-card:active { background: var(--active); }
+.room-card img, .room-blank { width: 96px; height: 72px; border-radius: 10px; object-fit: cover; display: grid; place-items: center; background: var(--hue-soft); color: var(--hue-ink); }
+.room-card span:last-child { display: grid; gap: 2px; }
+.room-card b { font-size: 16px; }
+.room-card small { color: var(--muted); font-size: 13px; }
+
+.steps-nav { position: sticky; top: 52px; z-index: 15; display: flex; gap: 6px; overflow-x: auto; margin: 0 -16px 8px; padding: 8px 16px;
+  background: var(--ground); scrollbar-width: none; }
+.steps-nav::-webkit-scrollbar { display: none; }
+.steps-nav a { flex: none; display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 99px; text-decoration: none;
+  font-size: 14px; font-weight: 500; color: var(--hue-ink); background: var(--hue-soft); }
+@media (min-width: 900px) { .steps-nav { top: 0; } }
+.dstep { scroll-margin-top: 110px; }
+.three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.three label, .two label { margin-top: 8px; }
+.three label { display: grid; gap: 6px; font-size: 13px; font-weight: 500; }
+#d-size label { display: grid; gap: 6px; font-size: 13px; font-weight: 500; color: var(--muted); }
+
+/* the room unfolded: ceiling above, four walls in a row, floor below */
+.cross { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
+.slot { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; touch-action: none; cursor: grab;
+  outline: 1.5px dashed color-mix(in srgb, var(--hue-ink) 40%, transparent); outline-offset: -1.5px; background: var(--hue-soft);
+  transition: transform 160ms var(--ease-out), outline-color 160ms ease; }
+.slot.has { outline: 0; }
+.slot img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.slot-name { position: absolute; left: 6px; bottom: 6px; padding: 2px 7px; border-radius: 6px; font-size: 11.5px; font-weight: 600;
+  background: color-mix(in srgb, var(--ground) 88%, transparent); color: var(--hue-ink); }
+.slot:not(.has) .slot-name { left: 50%; top: 50%; bottom: auto; transform: translate(-50%, -50%); background: none; white-space: nowrap; }
+.slot-x { position: absolute; top: 4px; right: 4px; width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: 50%;
+  background: color-mix(in srgb, var(--ground) 85%, transparent); color: var(--text); cursor: pointer; }
+.slot-x .ic { width: 15px; height: 15px; }
+.slot.over, .tray-pic.over { transform: scale(1.04); outline: 2.5px solid var(--hue); outline-offset: -2.5px; }
+.slot.picked, .tray-pic.picked { outline: 3px solid var(--hue-ink); outline-offset: -3px; }
+.slot.dragging, .tray-pic.dragging { opacity: .35; }
+.drag-ghost { position: fixed; left: 0; top: 0; z-index: 90; width: 80px; height: 80px; object-fit: cover; border-radius: 10px; pointer-events: none;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .25); /* taste-skill-ignore: lifted while dragging */ }
+.tray-row { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+.tray { flex: 1; display: flex; gap: 6px; overflow-x: auto; min-height: 56px; align-items: center; padding: 4px; border-radius: 10px; background: var(--surface); }
+.tray-pic { flex: none; width: 56px; height: 56px; border-radius: 8px; overflow: hidden; touch-action: none; cursor: grab; }
+.tray-pic img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.tray .meta { padding: 0 8px; }
+
+.brief { display: grid; gap: 6px; }
+.item-list { display: grid; gap: 8px; margin-top: 14px; }
+.item { padding: 10px 12px 12px; border-radius: var(--radius-inner); background: var(--surface); }
+.item-head { display: flex; align-items: center; gap: 8px; }
+.item-head b { font-size: 15px; }
+.item-head small { color: var(--muted); }
+.item-head select { margin-left: auto; width: auto; min-height: 40px; height: 40px; padding: 0 10px; font-size: 14px; border-radius: 99px; }
+.item-head .icon-btn { width: 40px; height: 40px; }
+.item-sw { width: 16px; height: 16px; border-radius: 4px; flex: none; outline: 1px solid rgba(0,0,0,.12); outline-offset: -1px; }
+.item-dims { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 8px; }
+.item-dims label { display: grid; gap: 3px; font-size: 11.5px; color: var(--muted); }
+.item-dims input { min-height: 40px; padding: 6px 8px; font-size: 15px; }
+@media (max-width: 420px) { .item-dims { grid-template-columns: repeat(3, 1fr); } }
+.pick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pick-grid .btn { justify-content: flex-start; border-radius: 12px; }
+
+/* the 3D stage: CSS planes in a perspective box */
+.stage { position: relative; height: 340px; border-radius: var(--radius-card); overflow: hidden; perspective: 1100px; touch-action: none; cursor: grab;
+  background: var(--hue-soft); }
+.room3d { position: absolute; left: 50%; top: 52%; width: 0; height: 0; transform-style: preserve-3d; }
+.pl { position: absolute; left: 0; top: 0; backface-visibility: hidden; background: #f4f1ea center / cover no-repeat;
+  outline: 1px solid rgba(31, 53, 82, .25); outline-offset: -1px; display: grid; place-items: center; }
+.pl span { font-size: 11px; font-weight: 600; color: #3f5f86; opacity: .7; }
+.pl.floor { background-color: #e6dccb; }
+.pl.ceil { background-color: #fbfaf6; }
+.box { position: absolute; left: 0; top: 0; transform-style: preserve-3d; }
+.bf { position: absolute; left: 0; top: 0; outline: 1px solid rgba(0, 0, 0, .18); outline-offset: -1px; }
+
+.sheet-prev { margin: 10px 0 4px; border-radius: var(--radius-inner); overflow: hidden; outline: 1px solid var(--border); background: #fff; }
+.sheet-prev svg { display: block; width: 100%; height: auto; }
+.sheet-prev { cursor: zoom-in; }
