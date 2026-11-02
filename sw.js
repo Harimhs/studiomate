@@ -1,7 +1,7 @@
 /* StudioMate service worker: offline shell, "Share to StudioMate", background reminders */
-const V = 'sm-v3';
-const SHELL = ['./', 'index.html', 'app.js', 'styles.css', 'manifest.json', 'icon-192.png', 'icon-512.png'];
-const STORES = ['contacts', 'sites', 'followups', 'library', 'materials', 'sessions', 'inbox', 'meta'];
+const V = 'sm-v4';
+const SHELL = ['./', 'index.html', 'app.js', 'features.js', 'styles.css', 'manifest.json', 'icon-192.png', 'icon-512.png'];
+const STORES = ['contacts', 'sites', 'followups', 'library', 'materials', 'sessions', 'inbox', 'meta', 'decisions', 'boards'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)));
@@ -33,7 +33,7 @@ self.addEventListener('fetch', e => {
 /* IndexedDB, same schema as app.js */
 function openDB() {
   return new Promise((res, rej) => {
-    const r = indexedDB.open('studiomate', 1);
+    const r = indexedDB.open('studiomate', 2);
     r.onupgradeneeded = () => { for (const s of STORES) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error);

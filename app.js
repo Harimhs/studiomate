@@ -81,12 +81,12 @@ const I = {
 const STAR = '<svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.5 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 17l-5.4 3 1.2-6-4.5-4.2 6.1-.7z"/></svg>';
 
 /* ================= storage (IndexedDB) ================= */
-const STORES = ['contacts', 'sites', 'followups', 'library', 'materials', 'sessions', 'inbox', 'meta'];
+const STORES = ['contacts', 'sites', 'followups', 'library', 'materials', 'sessions', 'inbox', 'meta', 'decisions', 'boards'];
 const DB = {
   db: null,
   open() {
     return new Promise((res, rej) => {
-      const r = indexedDB.open('studiomate', 1);
+      const r = indexedDB.open('studiomate', 2);
       r.onupgradeneeded = () => { for (const s of STORES) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
       r.onsuccess = () => { this.db = r.result; res(); };
       r.onerror = () => rej(r.error);
@@ -324,11 +324,12 @@ const siteOptions = sel => `<option value="">None</option>` +
 let cur = 'today';
 const views = { today: vToday, followups: vFollowups, library: vLibrary, materials: vMaterials, people: vPeople };
 function render(focusId) {
-  cur = location.hash.slice(1).split('?')[0] || 'today';
-  if (!views[cur]) cur = 'today';
-  $$('.tabs a').forEach(a => a.classList.toggle('on', a.dataset.tab === cur));
+  const [name, arg] = (location.hash.slice(1).split('?')[0] || 'today').split('/');
+  cur = views[name] ? name : 'today';
+  const tab = { site: 'people', board: 'library' }[cur] || cur;
+  $$('.tabs a').forEach(a => a.classList.toggle('on', a.dataset.tab === tab));
   const el = $('#view');
-  views[cur](el);
+  views[cur](el, arg && decodeURIComponent(arg));
   if (focusId) {
     const i = document.getElementById(focusId);
     if (i) { i.focus(); try { i.setSelectionRange(i.value.length, i.value.length); } catch { /* not a text input */ } }
@@ -563,7 +564,7 @@ function personCard(c) {
 }
 function siteCard(s) {
   const n = S.followups.filter(f => isOpen(f) && f.siteId === s.id).length;
-  return `<article class="card"><div class="p-main" data-act="editS" data-id="${s.id}">
+  return `<article class="card"><div class="p-main" data-act="openSite" data-id="${s.id}">
       <h3>${esc(s.name)}</h3><p class="meta">${[s.client, s.area].filter(Boolean).map(esc).join(' · ') || 'No details'}${n ? ` · ${n} open` : ''}</p></div>
     <div class="fu-actions">
       ${s.lat != null ? `<a class="btn" href="${dirUrl(s)}" target="_blank" rel="noopener">${I.nav}Directions</a><button class="btn" data-act="nearSite" data-id="${s.id}">${I.pin}Who’s near</button>` : '<span class="meta">Add a location to see who’s near</span>'}
