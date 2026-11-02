@@ -1,6 +1,6 @@
 /* StudioMate service worker: offline shell, "Share to StudioMate", background reminders */
-const V = 'sm-v4';
-const SHELL = ['./', 'index.html', 'app.js', 'features.js', 'styles.css', 'manifest.json', 'icon-192.png', 'icon-512.png'];
+const V = 'sm-v5';
+const SHELL = ['./', 'index.html', 'app.js', 'features.js', 'theme.js', 'styles.css', 'manifest.json', 'icon-192.png', 'icon-512.png'];
 const STORES = ['contacts', 'sites', 'followups', 'library', 'materials', 'sessions', 'inbox', 'meta', 'decisions', 'boards'];
 
 self.addEventListener('install', e => {
