@@ -15,7 +15,7 @@ const CLOUD = () => `<svg class="cloud mira" viewBox="-12 -24 124 128" aria-hidd
       <circle class="pl-hi" cx="39.6" cy="44" r="2.6"/><circle class="pl-hi" cx="59.6" cy="44" r="2.6"/>
       <circle class="pl-hi sm" cx="44.6" cy="50.2" r="1.2"/><circle class="pl-hi sm" cx="64.6" cy="50.2" r="1.2"/>
       <path class="pl-tear" d="M36.8 50.5q5.2 4.4 10.4 0M56.8 50.5q5.2 4.4 10.4 0"/>
-      <path class="pl-brow" d="M36 36.5l9-3M68 36.5l-9-3"/>
+      <path class="pl-brow l" d="M35.6 38.4q3.6-4.6 9.8-4.4"/><path class="pl-brow r" d="M68.4 38.4q-3.6-4.6-9.8-4.4"/>
     </g>
     <path class="cl-happy" d="M37.5 48.5q4.5-5.5 9 0M57.5 48.5q4.5-5.5 9 0"/><path class="cl-sleep" d="M37.5 48h9M57.5 48h9"/>
   </g>

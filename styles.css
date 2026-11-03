@@ -791,9 +791,14 @@ body.noscroll #cloud { opacity: 0; pointer-events: none; }
 .pl-eye { fill: var(--cl-eye); transform-box: fill-box; transform-origin: center; transition: transform 140ms ease; }
 .pl-hi { fill: #fff; } .pl-hi.sm { opacity: .9; }
 .pl-tear { fill: none; stroke: #bfe0f7; stroke-width: 1.8; stroke-linecap: round; opacity: .9; }
-.pl-brow { fill: none; stroke: var(--cl-eye); stroke-width: 2.2; stroke-linecap: round; opacity: .75; }
+.pl-brow { fill: none; stroke: var(--cl-eye); stroke-width: 2.6; stroke-linecap: round; opacity: .55; transform-box: fill-box; }
+.pl-brow.l { transform-origin: 100% 50%; } .pl-brow.r { transform-origin: 0% 50%; }
+[data-mood="worried"] .pl-brow.l { animation: brow-l 3.2s ease-in-out infinite; }
+[data-mood="worried"] .pl-brow.r { animation: brow-r 3.2s ease-in-out infinite; }
+@keyframes brow-l { 0%, 100% { transform: rotate(0) translateY(0); } 50% { transform: rotate(-6deg) translateY(-1px); } }
+@keyframes brow-r { 0%, 100% { transform: rotate(0) translateY(0); } 50% { transform: rotate(6deg) translateY(-1px); } }
 [data-time="night"] .pl-eye, [data-weather="storm"] .pl-eye { fill: #15131a; }
-[data-time="night"] .pl-brow, [data-weather="storm"] .pl-brow { stroke: #fdfbf4; }
+[data-time="night"] .pl-brow, [data-weather="storm"] .pl-brow { stroke: #fdfbf4; opacity: .7; }
 [data-mood="worried"] .cl-eye { display: none; }
 [data-mood="worried"] .cl-plead { display: inline; }
 [data-mood="worried"] .cl-eyes { transform: translateY(-1.5px) !important; }
