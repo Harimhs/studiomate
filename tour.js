@@ -109,7 +109,7 @@ function tourUI() {
     if (tourAt >= STEPS.length - 1) endTour(); else showStep(tourAt + 1);
   };
   $('.tour-skip', t).onclick = endTour;
-  addEventListener('resize', () => tourAt >= 0 && placeStep());
+  addEventListener('resize', () => { if (tourAt >= 0) { placeStep(); guideCloud(STEPS[tourAt].at()); } });
   return t;
 }
 async function showStep(i) {
@@ -128,6 +128,24 @@ async function showStep(i) {
   $('.tour-next', t).textContent = st.next || 'Next';
   t.classList.remove('moving');
   placeStep();
+  guideCloud(el);
+}
+/* the cloud is the guide: it sits on the card's corner nearest the highlight and points at it */
+function guideCloud(target) {
+  if (typeof guideTo !== 'function' || !roam.el) return;
+  const c = $('.tour-card').getBoundingClientRect();
+  const w = roam.el.clientWidth || 84, h = roam.el.clientHeight || 86;
+  if (target === roam.el) {
+    // this step is about the cloud itself: it rises above the card, hops, and the spotlight follows it
+    guideTo(c.left + c.width / 2 - w / 2, c.top - h - 18, null);
+    roam.el.classList.add('hop'); setTimeout(() => roam.el.classList.remove('hop'), 1600);
+    [350, 750, 1200, 1700].forEach(ms => setTimeout(() => tourAt >= 0 && STEPS[tourAt].at() === roam.el && placeStep(), ms));
+    return;
+  }
+  const card = $('.tour-card');
+  const x = c.left + 10;
+  const y = card.classList.contains('cl-bottom') ? c.bottom - h - 8 : c.top + 8;
+  guideTo(x, y, target || null);
 }
 function placeStep() {
   const t = $('#tour'), st = STEPS[tourAt], el = st && st.at();
@@ -142,9 +160,15 @@ function placeStep() {
   const ch = card.offsetHeight, below = r ? r.bottom + pad + 14 : innerHeight / 2 - ch / 2;
   const top = r && below + ch > innerHeight - 12 ? Math.max(12, r.top - pad - 14 - ch) : Math.min(below, innerHeight - ch - 12);
   card.style.top = `${Math.max(12, top)}px`;
+  // the cloud speaks from the card's edge that faces the highlight
+  const faceUp = !r || r.top < Math.max(12, top);
+  const self = el && el === roam.el;
+  card.classList.toggle('cl-top', !self && faceUp);
+  card.classList.toggle('cl-bottom', !self && !faceUp);
 }
 function startTour() {
   document.body.classList.add('touring');
+  if (typeof setMood === 'function') { moodHold = Date.now() + 36e5; setMood(''); }
   tourUI().classList.add('on');
   showStep(0);
 }
@@ -154,6 +178,7 @@ function endTour() {
   const t = $('#tour');
   if (t) t.classList.remove('on');
   document.body.classList.remove('touring');
+  if (typeof guideEnd === 'function') { moodHold = 0; guideEnd(); }
   if (sheetOpen) closeSheet();
 }
 

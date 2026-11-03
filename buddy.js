@@ -64,7 +64,7 @@ function flowTick(now) {
   const el = roam.el;
   if (!el || roam.drag || document.hidden) return;
   const still = LS.get('cloudStill', false) || matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const open = document.body.classList.contains('noscroll') || document.body.classList.contains('touring');
+  const open = document.body.classList.contains('noscroll') || document.body.classList.contains('touring');   // no wandering; guide sets its own goal
   if (!still && !open && !visit.on && now > flow.next && Date.now() > roam.pauseUntil && !miraBusy) {
     const p = freeSpot();
     if (p) { flow.tx = p.x; flow.ty = p.y; }
@@ -75,7 +75,7 @@ function flowTick(now) {
     flow.tx = Math.max(bb.minX + 10, Math.min(bb.maxX - 10, flow.tx)); flow.ty = Math.max(bb.minY + 8, Math.min(bb.maxY - 8, flow.ty));
     const dx = flow.tx - flow.bx, dy = flow.ty - flow.by, d = Math.hypot(dx, dy);
     // time-based, so a slow phone that drops frames drifts at the same speed
-    const dt = Math.min(0.5, flow.last ? (now - flow.last) / 1000 : 0.016), pull = 1 - Math.exp(-dt / 1.8);
+    const dt = Math.min(0.5, flow.last ? (now - flow.last) / 1000 : 0.016), pull = 1 - Math.exp(-dt / (guide.on ? 0.45 : 1.8));
     flow.bx += dx * pull; flow.by += dy * pull;
     flow.bx = Math.max(bb.minX + 10, Math.min(bb.maxX - 10, flow.bx)); flow.by = Math.max(bb.minY + 8, Math.min(bb.maxY - 8, flow.by));
     const t = now / 1000;
@@ -89,6 +89,21 @@ function flowTick(now) {
 }
 /* when something is overdue, the cloud visits it: floats to just above it, holds still,
    and points at the "late" label for a few seconds, then drifts off and comes back later */
+const guide = { on: false, target: null };
+function guideTo(x, y, target) { guide.on = true; guide.target = target || null; flow.tx = x; flow.ty = y; flow.next = Infinity; }
+function guideEnd() { guide.on = false; guide.target = null; flow.next = 0; roam.el && roam.el.classList.remove('pointing'); miraNudge(); }
+function pointTo(target) {
+  const el = roam.el, arm = el && $('.cl-arm', el);
+  if (!arm || !target) { el && el.classList.remove('pointing'); return; }
+  const lr = target.getBoundingClientRect();
+  const tx = lr.left + lr.width * 0.5, ty = lr.top + lr.height * 0.5;
+  const k = el.clientWidth / 124, mid = roam.x + (52 + 12) * k;
+  const sx = tx > mid ? 82 : 22, sy = 60;
+  const ang = Math.atan2(ty - (roam.y + (sy + 24) * k), tx - (roam.x + (sx + 12) * k)) * 180 / Math.PI;
+  arm.setAttribute('transform', `translate(${sx} ${sy}) rotate(${ang.toFixed(1)})`);
+  el.classList.add('pointing');
+  look(Math.cos(ang * Math.PI / 180) * 0.8, Math.sin(ang * Math.PI / 180) * 0.8);
+}
 const visit = { on: false, until: 0, next: 0 };
 function visitSpot() {
   const card = document.body.dataset.mood === 'worried' && !document.body.classList.contains('noscroll') && $('.fu.overdue');
@@ -102,6 +117,10 @@ function visitSpot() {
 function pointAtOverdue() {
   const el = roam.el, arm = el && $('.cl-arm', el);
   if (!arm) return;
+  if (guide.on) {   // guiding the tour: point at the step's button once it has arrived
+    if (Math.hypot(flow.tx - flow.bx, flow.ty - flow.by) < 18) pointTo(guide.target); else el.classList.remove('pointing');
+    return;
+  }
   const now = performance.now();
   // look the card up fresh each time: the list is redrawn often, and she may scroll
   const v = visitSpot();

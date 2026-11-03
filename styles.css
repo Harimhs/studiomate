@@ -880,5 +880,12 @@ body.noscroll #cloud { opacity: 0; pointer-events: none; }
 .tour-btns { display: flex; gap: 10px; justify-content: space-between; }
 .tour-btns .btn { flex: 1; }
 .tour-btns .btn:disabled { opacity: .35; }
-body.touring #cloud { opacity: 1 !important; pointer-events: none; }
+body.touring #cloud { opacity: 1 !important; pointer-events: none; z-index: 101; }
 @media (prefers-reduced-motion: reduce) { .tour-hole, .tour-card { transition: none; } }
+
+/* the cloud's seat in the guide card: top-left when the highlight is above, bottom-left when below */
+body.touring #cloud.roam { width: 64px; height: 66px; }
+.tour-card.cl-top .tour-top, .tour-card.cl-top h3 { padding-left: 70px; }
+.tour-card.cl-top h3 { min-height: 28px; }
+.tour-card.cl-bottom .tour-btns { padding-left: 70px; }
+.tour-card.cl-bottom { padding-bottom: 18px; }
