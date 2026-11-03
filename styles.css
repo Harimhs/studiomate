@@ -786,9 +786,23 @@ body.noscroll #cloud { opacity: 0; pointer-events: none; }
 .cl-star { animation: cl-twinkle 2.4s ease-in-out infinite; } .cl-star.s2 { animation-delay: .8s; } .cl-star.s3 { animation-delay: 1.6s; }
 
 /* moods: eyes, plus a small sign */
-[data-mood="worried"] .cl-eye { transform: scale(1.18, 1.35); }
-[data-mood="worried"] .cl-eyes { animation: cl-dart 2.6s ease-in-out infinite; }
-[data-mood="worried"] .cl-sweat { display: inline; animation: cl-sweat 2.2s ease-in-out infinite; }
+/* worried: big pleading eyes, glossy, brows tilted up in the middle */
+.cl-plead { display: none; }
+.pl-eye { fill: var(--cl-eye); transform-box: fill-box; transform-origin: center; transition: transform 140ms ease; }
+.pl-hi { fill: #fff; } .pl-hi.sm { opacity: .9; }
+.pl-tear { fill: none; stroke: #bfe0f7; stroke-width: 1.8; stroke-linecap: round; opacity: .9; }
+.pl-brow { fill: none; stroke: var(--cl-eye); stroke-width: 2.2; stroke-linecap: round; opacity: .75; }
+[data-time="night"] .pl-eye, [data-weather="storm"] .pl-eye { fill: #15131a; }
+[data-time="night"] .pl-brow, [data-weather="storm"] .pl-brow { stroke: #fdfbf4; }
+[data-mood="worried"] .cl-eye { display: none; }
+[data-mood="worried"] .cl-plead { display: inline; }
+[data-mood="worried"] .cl-eyes { transform: translateY(-1.5px) !important; }
+[data-mood="worried"] .pl-hi { animation: pl-shimmer 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+[data-mood="worried"] .pl-tear { animation: pl-wobble 2.4s ease-in-out infinite; }
+.blink .pl-eye { transform: scaleY(.15); }
+.blink .pl-hi, .blink .pl-tear { opacity: 0; }
+@keyframes pl-shimmer { 50% { transform: scale(1.18); } }
+@keyframes pl-wobble { 50% { opacity: .35; transform: translateY(.6px); } }
 [data-mood="happy"] .cl-eye, [data-mood="sleepy"] .cl-eye { display: none; }
 [data-mood="happy"] .cl-happy, [data-mood="sleepy"] .cl-sleep { display: inline; }
 [data-mood="sleepy"] .cl-zzz { display: inline; animation: cl-zzz 3s ease-in-out infinite; }

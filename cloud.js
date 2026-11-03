@@ -10,6 +10,13 @@ const CLOUD = () => `<svg class="cloud mira" viewBox="-12 -24 124 128" aria-hidd
   <path class="cl-bolt" d="M57 72l-9 14h7l-5 13 14-18h-7l5-9z"/>
   <g class="cl-eyes">
     <ellipse class="cl-eye" cx="42" cy="47" rx="4" ry="5.4"/><ellipse class="cl-eye" cx="62" cy="47" rx="4" ry="5.4"/>
+    <g class="cl-plead">
+      <ellipse class="pl-eye" cx="42" cy="47" rx="6.6" ry="7.6"/><ellipse class="pl-eye" cx="62" cy="47" rx="6.6" ry="7.6"/>
+      <circle class="pl-hi" cx="39.6" cy="44" r="2.6"/><circle class="pl-hi" cx="59.6" cy="44" r="2.6"/>
+      <circle class="pl-hi sm" cx="44.6" cy="50.2" r="1.2"/><circle class="pl-hi sm" cx="64.6" cy="50.2" r="1.2"/>
+      <path class="pl-tear" d="M36.8 50.5q5.2 4.4 10.4 0M56.8 50.5q5.2 4.4 10.4 0"/>
+      <path class="pl-brow" d="M36 36.5l9-3M68 36.5l-9-3"/>
+    </g>
     <path class="cl-happy" d="M37.5 48.5q4.5-5.5 9 0M57.5 48.5q4.5-5.5 9 0"/><path class="cl-sleep" d="M37.5 48h9M57.5 48h9"/>
   </g>
   <path class="cl-sweat" d="M78 22c5 6.5 7 10.5 3.6 14a5 5 0 0 1-7.4-6.4c.6-2.4 2-4.6 3.8-7.6z"/>
