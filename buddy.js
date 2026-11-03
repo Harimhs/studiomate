@@ -4,38 +4,146 @@
    Also here: how the app feels (swipe a follow-up, soft screen changes, a small vibration on success). */
 
 /* ---------- Mira herself: an original drawing, coloured by the screen ---------- */
-const MIRA = `<svg class="mira" viewBox="0 0 64 64" aria-hidden="true">
-  <g class="mira-body">
-    <rect class="m-back" x="17" y="9" width="34" height="46" rx="9" transform="rotate(12 34 32)"/>
-    <rect class="m-card" x="13" y="8" width="34" height="46" rx="9" transform="rotate(-6 30 31)"/>
-    <circle class="m-hole" cx="29" cy="15.5" r="2.6"/>
-    <g class="m-face" transform="rotate(-6 30 31)">
-      <g class="m-eyes"><ellipse cx="23.5" cy="31" rx="2.4" ry="3"/><ellipse cx="36.5" cy="31" rx="2.4" ry="3"/></g>
-      <path class="m-mouth" d="M25.5 39.5q4.5 4 9 0"/>
-      <circle class="m-cheek" cx="19.5" cy="37" r="2.2"/><circle class="m-cheek" cx="40.5" cy="37" r="2.2"/>
-    </g>
-  </g></svg>`;
+const MIRA_ICON = CLOUD;
 
 let miraLog = [];   // this session's conversation
 let miraBusy = false;
 const vibe = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch { /* not allowed */ } };
 
-function miraButton() {
-  if ($('#miraBtn')) return;
-  const html = `<button id="miraBtn" class="mira-btn" aria-label="Ask Mira, your assistant">${MIRA}<span class="mira-dot" hidden></span><span class="mira-say">Ask Mira</span></button>`;
-  const set = $('.top [data-act="settings"]');
-  if (set) set.insertAdjacentHTML('beforebegin', html); else document.body.insertAdjacentHTML('beforeend', html);
-  // on a wide screen she sits at the foot of the sidebar
-  const side = $('.tabs .nav-settings');
-  if (side) side.insertAdjacentHTML('beforebegin', `<button class="mira-side" data-act="openMira">${MIRA}<span>Ask Mira</span></button>`);
-  $('#miraBtn').onclick = openMira;
-  setInterval(() => { const b = $('#miraBtn'); if (b && !document.hidden) { b.classList.add('blink'); setTimeout(() => b.classList.remove('blink'), 180); } }, 4200);
+const roam = { el: null, x: 0, y: 0, drag: null, moved: false, timer: 0, pauseUntil: 0 };
+const navH = () => innerWidth >= 900 ? 0 : (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 62);
+function roamBounds() {
+  const side = innerWidth >= 900 ? 236 : 6;   // keep clear of the desktop sidebar
+  return { minX: side, maxX: Math.max(side, innerWidth - 82), minY: 60, maxY: Math.max(60, innerHeight - navH() - 76) };
 }
+function cloudInit() {
+  if ($('#cloud')) return;
+  document.body.insertAdjacentHTML('beforeend', `<button id="cloud" class="roam" aria-label="Ask Mira, your assistant">${CLOUD()}</button>`);
+  const el = roam.el = $('#cloud');
+  // first spot once the page has a size: bottom right, or where she last left it
+  const home = () => {
+    if (!innerWidth || !innerHeight) return requestAnimationFrame(home);
+    const b = roamBounds(), saved = LS.get('cloudPos', null);
+    place(saved ? saved.x : b.maxX - 4, saved ? saved.y : b.maxY - 10, true);
+    setTimeout(() => { if (blocks(roam.x, roam.y)) { const p = freeSpot(); if (p) place(p.x, p.y, false); } }, 900);
+  };
+  home();
+  el.addEventListener('pointerdown', e => {
+    roam.drag = { sx: e.clientX, sy: e.clientY, x: roam.x, y: roam.y }; roam.moved = false;
+    el.setPointerCapture(e.pointerId); el.classList.add('held');
+  });
+  el.addEventListener('pointermove', e => {
+    if (!roam.drag) return;
+    const dx = e.clientX - roam.drag.sx, dy = e.clientY - roam.drag.sy;
+    if (Math.hypot(dx, dy) > 6) roam.moved = true;
+    if (roam.moved) place(roam.drag.x + dx, roam.drag.y + dy, true);
+  });
+  const drop = () => {
+    if (roam.drag && roam.moved) { LS.set('cloudPos', { x: roam.x, y: roam.y }); roam.pauseUntil = Date.now() + 25000; vibe(6); }
+    roam.drag = null; el.classList.remove('held');
+  };
+  el.addEventListener('pointerup', drop);
+  el.addEventListener('pointercancel', drop);
+  el.addEventListener('click', e => { if (roam.moved) { roam.moved = false; e.preventDefault(); return; } openMira(); });
+  // her finger catches its eye
+  document.addEventListener('pointerdown', e => { if (!e.target.closest('#cloud')) lookAt(e.clientX, e.clientY); }, true);
+  addEventListener('resize', () => place(roam.x, roam.y, true));
+  setInterval(() => { if (!document.hidden && roam.el) { roam.el.classList.add('blink'); setTimeout(() => roam.el.classList.remove('blink'), 150); } }, 3800);
+  scheduleRoam();
+}
+function place(x, y, instant) {
+  const b = roamBounds(), el = roam.el;
+  x = Math.max(b.minX, Math.min(b.maxX, x)); y = Math.max(b.minY, Math.min(b.maxY, y));
+  el.classList.toggle('no-ease', !!instant);
+  if (!instant) { const dx = x - roam.x, dy = y - roam.y, m = Math.hypot(dx, dy) || 1; look(dx / m, dy / m * 0.8); }
+  roam.x = x; roam.y = y;
+  el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+}
+function look(lx, ly) { const g = roam.el && $('.cl-eyes', roam.el); if (g) g.style.transform = `translate(${(lx * 4).toFixed(1)}px, ${(ly * 3).toFixed(1)}px)`; }
+function lookAt(px, py) {
+  if (!roam.el) return;
+  const dx = px - (roam.x + 40), dy = py - (roam.y + 32), m = Math.hypot(dx, dy) || 1;
+  look(dx / m, dy / m);
+  clearTimeout(roam.lookT); roam.lookT = setTimeout(() => look(0, 0), 1800);
+}
+function pickSpot() {
+  const b = roamBounds();
+  // when something is overdue, it sometimes floats over to it
+  const od = $('.fu.overdue');
+  if (od && Math.random() < 0.45) {
+    const r = od.getBoundingClientRect();
+    if (r.top > 120 && r.top < b.maxY) return { x: r.right - 84, y: r.top - 58 };
+  }
+  // otherwise it keeps to the edges, so it never sits on what she is reading
+  const edge = Math.random() < 0.5 ? b.minX + Math.random() * 24 : b.maxX - Math.random() * 24;
+  return { x: Math.random() < 0.8 ? edge : b.minX + Math.random() * (b.maxX - b.minX), y: b.minY + Math.random() * (b.maxY - b.minY) };
+}
+/* never park on something she might tap */
+const TAPPABLE = 'button, a, input, select, textarea, label, .fu-main, .chip, .thumb, .mcard, .dec, .site-row, .step';
+function blocks(x, y) {
+  const el = roam.el;
+  if (el) el.style.visibility = 'hidden';
+  const pts = [[14, 18], [66, 18], [40, 32], [14, 50], [66, 50]];
+  const hit = pts.some(([dx, dy]) => { const t = document.elementFromPoint(x + dx, y + dy); return t && t.closest(TAPPABLE) && !t.closest('#cloud'); });
+  if (el) el.style.visibility = '';
+  return hit;
+}
+function freeSpot() {
+  for (let i = 0; i < 14; i++) { const p = pickSpot(); const b = roamBounds(); const x = Math.max(b.minX, Math.min(b.maxX, p.x)), y = Math.max(b.minY, Math.min(b.maxY, p.y)); if (!blocks(x, y)) return { x, y }; }
+  return null;
+}
+let scrollT;
+addEventListener('scroll', () => {
+  clearTimeout(scrollT);
+  scrollT = setTimeout(() => { if (roam.el && !roam.drag && blocks(roam.x, roam.y)) { const p = freeSpot(); if (p) place(p.x, p.y, false); } }, 250);
+}, { passive: true });
+
+function scheduleRoam() { clearTimeout(roam.timer); roam.timer = setTimeout(roamStep, 6000 + Math.random() * 7000); }
+function roamStep() {
+  const still = LS.get('cloudStill', false) || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!document.hidden && !document.body.classList.contains('noscroll') && !still && Date.now() > roam.pauseUntil && !miraBusy) {
+    const p = freeSpot();
+    if (p) { place(p.x, p.y, false); setTimeout(() => look(0, 0), 3000); }
+  } else if (!still) look(Math.random() * 2 - 1, (Math.random() * 2 - 1) * 0.5);
+  scheduleRoam();
+}
+let moodHold = 0;
+function setMood(m) { if (m) document.body.dataset.mood = m; else delete document.body.dataset.mood; }
 function miraNudge() {
-  const n = S.followups.filter(f => isOpen(f) && bucket(f) === 'overdue').length;
-  const dot = $('#miraBtn .mira-dot');
-  if (dot) dot.hidden = !n;
+  if (Date.now() < moodHold) return;
+  const h = new Date().getHours();
+  const od = S.followups.some(f => isOpen(f) && bucket(f) === 'overdue');
+  const td = S.followups.some(f => isOpen(f) && bucket(f) === 'today');
+  setMood(miraBusy ? 'thinking' : h >= 22 || h < 6 ? 'sleepy' : od ? 'worried' : !td ? 'happy' : '');
+  roam.el && roam.el.setAttribute('aria-label', od ? 'Ask Mira. Something is overdue.' : 'Ask Mira, your assistant');
 }
+function cheer() { moodHold = Date.now() + 4500; setMood('happy'); roam.el && roam.el.classList.add('hop'); setTimeout(() => { roam.el && roam.el.classList.remove('hop'); moodHold = 0; miraNudge(); }, 4500); }
+
+/* ---------- weather and time of day ---------- */
+let sky = null;
+const skyOverride = () => { const q = location.search; return { wx: (q.match(/[?&]sky=(\w+)/) || [])[1], tod: (q.match(/[?&]tod=(\w+)/) || [])[1] }; };
+async function skyPlace() {
+  if (LS.get('useLoc', false)) { try { const p = await getLoc(); return { lat: p.lat, lng: p.lng, label: 'where you are' }; } catch { /* fall back */ } }
+  const st = S.sites.find(x => x.lat != null);
+  return st ? { lat: st.lat, lng: st.lng, label: st.area || st.name } : { lat: 13.08, lng: 80.27, label: 'Chennai' };
+}
+async function updateSky() {
+  const o = skyOverride();
+  document.body.dataset.time = o.tod || timeOfDay();
+  let w = LS.get('wx', null);
+  if (!o.wx && navigator.onLine && (!w || Date.now() - w.at > 30 * 60e3)) {
+    try {
+      const pl = await skyPlace();
+      const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pl.lat.toFixed(2)}&longitude=${pl.lng.toFixed(2)}&current=temperature_2m,weather_code,wind_speed_10m&timezone=auto`, { signal: AbortSignal.timeout(10000) });
+      const c = (await r.json()).current;
+      if (c) { w = { code: c.weather_code, temp: c.temperature_2m, wind: c.wind_speed_10m, place: pl.label, at: Date.now() }; LS.set('wx', w); }
+    } catch { /* keep the last known sky */ }
+  }
+  sky = w;
+  const kind = o.wx || (w ? wxKind(w) : '');
+  if (kind) document.body.dataset.weather = kind; else delete document.body.dataset.weather;
+}
+const skyLine = () => sky ? `${WX_WORDS[wxKind(sky)]} in ${sky.place}, ${Math.round(sky.temp)}°` : '';
 
 /* what Mira knows: a short summary of the designer's own data */
 function contextFor() {
@@ -47,7 +155,7 @@ function contextFor() {
   }).join('\n');
   const people = S.contacts.map(c => `- ${c.name} (${c.category}${c.area ? ', ' + c.area : ''})${recordText(c.id) ? ' ' + recordText(c.id) : ''}`).join('\n');
   const mats = S.materials.slice(0, 30).map(m => `- ${[m.brand, m.code, m.finish].filter(Boolean).join(' ')}${m.price ? ' ₹' + m.price + '/' + m.unit : ''}${contact(m.vendorId) ? ' from ' + contact(m.vendorId).name : ''}`).join('\n');
-  return `Today is ${t} (${new Date().toLocaleDateString('en-IN', { weekday: 'long' })}).
+  return `Today is ${t} (${new Date().toLocaleDateString('en-IN', { weekday: 'long' })}), ${timeOfDay()}.${sky ? ` Weather: ${skyLine()}, wind ${Math.round(sky.wind)} km/h.` : ''}
 Open follow-ups:\n${fu || '- none'}\nSites:\n${sites || '- none'}\nPeople:\n${people || '- none'}\nSaved samples:\n${mats || '- none'}`;
 }
 
@@ -58,7 +166,7 @@ function openMira() {
   const td = S.followups.filter(f => isOpen(f) && bucket(f) === 'today');
   const hello = miraLog.length ? '' : `<div class="msg mira-msg">Hi${name ? ' ' + esc(name) : ''}! ${od.length ? `${od.length} thing${od.length > 1 ? 's are' : ' is'} overdue${od[0] ? `, starting with <b>${esc(od[0].title)}</b>` : ''}.` : td.length ? `You have ${td.length} follow-up${td.length > 1 ? 's' : ''} today.` : 'Nothing is waiting on you right now.'} What can I do?</div>`;
   const chips = ['What’s pending today?', 'Write a Tamil reminder for my oldest follow-up', 'Ideas for a small pooja unit', 'Which vendor is usually late?'];
-  openSheet(`<div class="mira-head">${MIRA}<div><h2>Mira</h2><p class="meta">${aiKey() ? 'Your studio assistant' : 'Add a Gemini key in Settings so I can think with you'}</p></div></div>
+  openSheet(`<div class="mira-head">${MIRA_ICON()}<div><h2>Mira</h2><p class="meta">${skyLine() ? esc(skyLine()) + ' · ' : ''}${aiKey() ? 'Your studio assistant' : 'Add a Gemini key in Settings so I can think with you'}</p></div></div>
     <div class="chat" id="chat">${hello}${miraLog.map(m => msgHtml(m)).join('')}</div>
     <div class="chips chat-chips">${chips.map(c => `<button type="button" class="chip" data-ask="${esc(c)}">${esc(c)}</button>`).join('')}</div>
     <form id="miraForm" class="chat-input" autocomplete="off">
@@ -94,13 +202,13 @@ async function ask(q) {
   chat.insertAdjacentHTML('beforeend', msgHtml({ role: 'user', text: q }) + '<div class="msg mira-msg typing" id="typing"><i></i><i></i><i></i></div>');
   $('#miraQ').value = '';
   chat.scrollTop = chat.scrollHeight;
-  $('#miraBtn')?.classList.add('thinking'); $('.mira-head .mira')?.classList.add('thinking');
+  $('#cloud')?.classList.add('thinking'); setMood('thinking'); $('.mira-head .mira')?.classList.add('thinking');
   miraBusy = true;
   let m;
   try {
     m = aiKey() ? await miraThink(q) : { text: offlineReply(q), actions: [] };
   } catch (e) { m = { text: aiError(e, 'text'), actions: [] }; }
-  finally { miraBusy = false; $('#miraBtn')?.classList.remove('thinking'); $('.mira-head .mira')?.classList.remove('thinking'); }
+  finally { miraBusy = false; $('#cloud')?.classList.remove('thinking'); miraNudge(); $('.mira-head .mira')?.classList.remove('thinking'); }
   m.id = uid(); m.role = 'mira';
   miraLog.push(m);
   $('#typing')?.remove();
@@ -201,11 +309,28 @@ const renderBeforeFeel = render;
 let viaNav = false;
 window.addEventListener('hashchange', () => { viaNav = true; }, true);
 render = function (focusId) {
-  const run = () => { renderBeforeFeel(focusId); wireSwipes(); miraNudge(); };
+  const run = () => {
+    renderBeforeFeel(focusId); wireSwipes(); miraNudge();
+    setTimeout(() => { if (roam.el && !roam.drag && blocks(roam.x, roam.y)) { const p = freeSpot(); if (p) place(p.x, p.y, false); } }, 400);
+  };
   if (viaNav && document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) { viaNav = false; document.startViewTransition(run); }
   else { viaNav = false; run(); }
 };
 
 ACT.openMira = () => openMira();
+const settingsBeforeCloud = ACT.settings;
+ACT.settings = () => {
+  settingsBeforeCloud();
+  const card = $('.sheet-card');
+  const anchor = card && [...$$('.glabel', card)].find(g => g.textContent.trim() === 'Your data');
+  if (!anchor) return;
+  anchor.insertAdjacentHTML('beforebegin', `<label class="check" style="margin-top:18px"><input type="checkbox" id="stCloud" ${LS.get('cloudStill', false) ? '' : 'checked'}> Let Mira the cloud wander around the screen</label>`);
+  $('#stCloud', card).onchange = e => { LS.set('cloudStill', !e.target.checked); if (!e.target.checked) LS.set('cloudPos', { x: roam.x, y: roam.y }); };
+};
 I.send = svg('<path d="M4.5 12 19.5 5l-4 14-3.5-5.5z"/><path d="m12 13.5 7.5-8.5"/>');
-miraButton();
+cloudInit();
+updateSky().then(miraNudge);
+setInterval(() => { updateSky(); miraNudge(); }, 10 * 60e3);
+const doneBeforeCheer = ACT.oDone;
+ACT.oDone = async id => { await doneBeforeCheer(id); cheer(); };
+if (/[?&]openmira\b/.test(location.search)) setTimeout(() => openMira(), 3200);

@@ -1,10 +1,11 @@
 /* StudioMate service worker: offline shell, "Share to StudioMate", background reminders */
-const V = 'sm-v8';
-const SHELL = ['./', 'index.html', 'app.js', 'features.js', 'theme.js', 'buddy.js', 'design.js', 'ai.js', 'styles.css', 'manifest.json', 'icon-192.png', 'icon-512.png'];
+const V = 'sm-v10';
+const SHELL = ['./', 'index.html', 'app.js', 'features.js', 'theme.js', 'cloud.js', 'buddy.js', 'design.js', 'ai.js', 'styles.css', 'manifest.json', 'icon-192.png', 'icon-512.png'];
 const STORES = ['contacts', 'sites', 'followups', 'library', 'materials', 'sessions', 'inbox', 'meta', 'decisions', 'boards', 'designs'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)));
+  // bypass the browser's HTTP cache, so a new version never stores stale copies
+  e.waitUntil(caches.open(V).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))));
   self.skipWaiting();
 });
 self.addEventListener('activate', e => {
