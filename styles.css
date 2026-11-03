@@ -685,3 +685,20 @@ body[data-screen="design"] { --hue: #3f5f86; --hue-soft: #dfe7f1; --hue-mid: #bc
 .sheet-prev { margin: 10px 0 4px; border-radius: var(--radius-inner); overflow: hidden; outline: 1px solid var(--border); background: #fff; }
 .sheet-prev svg { display: block; width: 100%; height: auto; }
 .sheet-prev { cursor: zoom-in; }
+
+/* AI renders */
+.renders { display: grid; gap: 12px; }
+@media (min-width: 700px) { .renders { grid-template-columns: 1fr 1fr; } }
+.render { margin: 0; border-radius: var(--radius-card); overflow: hidden; background: var(--surface); }
+.render-img { position: relative; aspect-ratio: 4 / 3; background: var(--hue-soft); -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+.render-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; -webkit-touch-callout: none; pointer-events: none; }
+.render-img .before { opacity: 0; transition: opacity 160ms ease; }
+.render-img.show-before .before { opacity: 1; }
+.render figcaption { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; }
+.render figcaption b { font-size: 15px; }
+.render figcaption small { color: var(--muted); font-size: 12.5px; margin-right: auto; }
+.render.working .render-img::after { content: ""; position: absolute; inset: 0; background: color-mix(in srgb, var(--hue-soft) 55%, transparent);
+  animation: breathe 1.4s ease-in-out infinite; }
+@keyframes breathe { 50% { opacity: .35; } }
+.btn.busy { opacity: .75; }
+@media (prefers-reduced-motion: reduce) { .render.working .render-img::after { animation: none; } }
