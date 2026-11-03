@@ -743,7 +743,7 @@ body[data-screen="design"] { --hue: #3f5f86; --hue-soft: #dfe7f1; --hue-mid: #bc
 }
 #cloud.held .cloud { transform: scale(1.08); }
 body.noscroll #cloud { opacity: 0; pointer-events: none; }
-.cloud { --cl-body: color-mix(in srgb, var(--hue) 62%, #fff); --cl-eye: #1c1a18; width: 100%; height: 100%; overflow: visible; display: block; }
+.cloud { --cl-body: color-mix(in srgb, var(--hue) 34%, #fff); --cl-eye: #1c1a18; width: 100%; height: 100%; overflow: visible; display: block; }
 .cl-body { fill: var(--cl-body); transition: fill 600ms ease; }
 .cl-eyes { transition: transform 380ms var(--ease-out); }
 .cl-eye { fill: var(--cl-eye); transform-box: fill-box; transform-origin: center; transition: transform 140ms ease; }
@@ -755,7 +755,6 @@ body.noscroll #cloud { opacity: 0; pointer-events: none; }
 .cl-bolt { fill: #f6c445; }
 .cl-sweat { fill: #7fb6e6; }
 .cl-zzz text { font: 700 17px var(--font); fill: #4c5468; } .cl-zzz text.big { font-size: 22px; }
-[data-time="night"] .cl-zzz text { fill: #e6e9f5; }
 .cl-dots circle { fill: #6a6f80; }
 #cloud .cloud { filter: drop-shadow(0 6px 8px rgba(40, 36, 30, .16)); animation: cl-bob 3.4s ease-in-out infinite; } /* taste-skill-ignore: Mira floats */
 .blink .cl-eye { transform: scaleY(.12); }
@@ -763,18 +762,18 @@ body.noscroll #cloud { opacity: 0; pointer-events: none; }
 
 /* time of day sets the base colour */
 [data-time="morning"] .cloud { --cl-body: #ffd5bf; }
-[data-time="evening"] .cloud { --cl-body: #f5b98f; }
-[data-time="night"]   .cloud { --cl-body: #56658c; --cl-eye: #fdfbf4; }
+[data-time="evening"] .cloud { --cl-body: #fbd3b6; }
+[data-time="night"]   .cloud { --cl-body: #d3d6ee; }
 [data-time="night"] .cl-moon { display: inline; }
 /* weather wins over time of day */
 [data-weather="sunny"]:not([data-time="night"]) .cl-sun { display: inline; }
 [data-weather="sunny"]:not([data-time="night"]) .cl-sun { transform-origin: 80px 12px; animation: cl-spin 18s linear infinite; }
-[data-weather="cloudy"] .cloud { --cl-body: #d3d8de; }
+[data-weather="cloudy"] .cloud { --cl-body: #e3e6ea; }
 [data-weather="fog"] .cloud { --cl-body: #e2e1db; }
 [data-weather="fog"] .cl-body { opacity: .8; }
-[data-weather="rain"] .cloud { --cl-body: #9eb0c6; }
+[data-weather="rain"] .cloud { --cl-body: #cbd8e8; }
 [data-weather="rain"] .cl-rain, [data-weather="storm"] .cl-rain { display: inline; }
-[data-weather="storm"] .cloud { --cl-body: #6c7888; --cl-eye: #fdfbf4; }
+[data-weather="storm"] .cloud { --cl-body: #c3cad3; }
 [data-weather="storm"] .cl-bolt { display: inline; animation: cl-flash 2.6s steps(1) infinite; }
 [data-weather="hot"] .cloud { --cl-body: #ffcfb0; }
 [data-weather="hot"] .cl-sweat { display: inline; }
@@ -795,8 +794,6 @@ body.noscroll #cloud { opacity: 0; pointer-events: none; }
 [data-mood="worried"] .pl-brow.r { animation: brow-r 3.2s ease-in-out infinite; }
 @keyframes brow-l { 0%, 100% { transform: rotate(0) translateY(0); } 50% { transform: rotate(-6deg) translateY(-1px); } }
 @keyframes brow-r { 0%, 100% { transform: rotate(0) translateY(0); } 50% { transform: rotate(6deg) translateY(-1px); } }
-[data-time="night"] .pl-eye, [data-weather="storm"] .pl-eye { fill: #15131a; }
-[data-time="night"] .pl-brow, [data-weather="storm"] .pl-brow { stroke: #fdfbf4; opacity: .7; }
 [data-mood="worried"] .cl-eye { display: none; }
 [data-mood="worried"] .cl-plead { display: inline; }
 [data-mood="worried"] .cl-eyes { transform: translateY(-1.5px) !important; }
@@ -837,18 +834,51 @@ body.noscroll #cloud { opacity: 0; pointer-events: none; }
 
 /* worried: pleading eyes, soft brows and a small frown (chosen: version 4) */
 .pl-mf { display: none; fill: none; stroke: var(--cl-eye); stroke-width: 2.4; stroke-linecap: round; }
-[data-time="night"] .pl-mf, [data-weather="storm"] .pl-mf { stroke: #15131a; }
 [data-mood="worried"] .pl-mf { display: inline; }
 .pl-mw { display: none; }
 
 /* the pointing arm: thin, one hand, three fingers; only when something overdue is near */
 .cl-arm { display: none; }
 .pointing .cl-arm { display: inline; }
-.arm-line { fill: none; stroke: #3b3833; stroke-width: 2.8; stroke-linecap: round; }
-.arm-hand circle { fill: #3b3833; }
-.arm-hand path { fill: none; stroke: #3b3833; stroke-width: 2.6; stroke-linecap: round; }
-[data-time="night"] .arm-line, [data-time="night"] .arm-hand path, [data-weather="storm"] .arm-line, [data-weather="storm"] .arm-hand path { stroke: #f1eee6; }
-[data-time="night"] .arm-hand circle, [data-weather="storm"] .arm-hand circle { fill: #f1eee6; }
-.pointing .arm-hand { animation: arm-tap 1.1s ease-in-out infinite; }
-@keyframes arm-tap { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
-@media (prefers-reduced-motion: reduce) { #cloud.pointing .arm-hand { animation: none; } }
+/* the arm and hand wear the cloud's own light colour, with a soft darker edge */
+.arm-o, .arm-line, .arm-f { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.arm-o { stroke: color-mix(in srgb, var(--cl-body) 62%, #2a2724); stroke-width: 6.4; }
+.arm-line, .arm-f { stroke: var(--cl-body); stroke-width: 4.2; }
+.arm-o-c { fill: color-mix(in srgb, var(--cl-body) 62%, #2a2724); stroke: color-mix(in srgb, var(--cl-body) 62%, #2a2724); stroke-width: 2.2; }
+.arm-c { fill: var(--cl-body); }
+#cloud.pointing .arm-hand { animation: none; } }
+
+/* ================= first-run welcome and guided tour ================= */
+.welcome-ask { text-align: center; padding: 6px 4px 4px; }
+.welcome-ask .welcome-cloud { width: 96px; height: 98px; margin: 0 auto 6px; }
+.welcome-ask .welcome-cloud .cloud { width: 100%; height: 100%; animation: cl-bob 3.4s ease-in-out infinite; }
+.welcome-ask h2 { font: 400 24px/1.25 var(--serif); margin: 0 0 10px; padding: 0 !important; }
+.welcome-ask .actions { justify-content: center; }
+.welcome-ask .actions .btn { min-width: 120px; }
+
+.tour { position: fixed; inset: 0; z-index: 100; display: none; }
+.tour.on { display: block; }
+.tour-hole {
+  position: fixed; border-radius: 14px; pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(18, 16, 14, .62), 0 0 0 3px var(--hue); /* taste-skill-ignore: the guide's spotlight */
+  transition: left 260ms var(--ease-out), top 260ms var(--ease-out), width 260ms var(--ease-out), height 260ms var(--ease-out), opacity 200ms ease;
+}
+.tour-card {
+  position: fixed; left: 16px; right: 16px; max-width: 420px; margin: 0 auto; padding: 16px 18px 14px;
+  background: var(--ground); color: var(--text); border-radius: 18px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, .28); /* taste-skill-ignore: the guide card floats */
+  transition: top 260ms var(--ease-out), opacity 160ms ease;
+}
+@media (min-width: 900px) { .tour-card { left: 248px; } }
+.tour.moving .tour-card { opacity: .35; }
+.tour.busy .tour-next { opacity: .6; pointer-events: none; }
+.tour-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.tour-count { font-size: 13px; color: var(--muted); }
+.tour-skip { border: 0; background: none; color: var(--muted); font: 500 13px var(--font); min-height: 36px; padding: 0 4px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.tour-card h3 { font: 400 22px/1.2 var(--serif); margin: 0 0 6px; }
+.tour-card ul { margin: 0 0 14px; padding-left: 18px; display: grid; gap: 4px; font-size: 15px; line-height: 1.45; }
+.tour-btns { display: flex; gap: 10px; justify-content: space-between; }
+.tour-btns .btn { flex: 1; }
+.tour-btns .btn:disabled { opacity: .35; }
+body.touring #cloud { opacity: 1 !important; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .tour-hole, .tour-card { transition: none; } }

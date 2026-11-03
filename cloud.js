@@ -22,7 +22,7 @@ const CLOUD = () => `<svg class="cloud mira" viewBox="-12 -24 124 128" aria-hidd
   </g>
   <path class="cl-sweat" d="M78 22c5 6.5 7 10.5 3.6 14a5 5 0 0 1-7.4-6.4c.6-2.4 2-4.6 3.8-7.6z"/>
   <g class="cl-zzz"><text x="76" y="22">z</text><text x="90" y="6" class="big">Z</text></g>
-  <g class="cl-arm" transform="translate(84 52)"><path class="arm-line" d="M0 0q15-7 32-2"/><g transform="translate(32 -2)"><g class="arm-hand"><circle r="3.8"/><path d="M2-2.4l7-4.6M3.2 0h9M2 2.4l7 4.6"/></g></g></g>
+  <g class="cl-arm" transform="translate(84 58)"><path class="arm-o" d="M0 0q12-4 24 0"/><path class="arm-line" d="M0 0q12-4 24 0"/><g transform="translate(24 0)"><g class="arm-hand"><path class="arm-o" d="M5.5-1.4h9.5M5.2 1.6l5 2.2M3.6 3.8l3.6 3.2"/><circle class="arm-o-c" cx="2.4" cy="0" r="4.2"/><path class="arm-f" d="M5.5-1.4h9.5M5.2 1.6l5 2.2M3.6 3.8l3.6 3.2"/><circle class="arm-c" cx="2.4" cy="0" r="4.2"/></g></g></g>
   <g class="cl-dots"><circle cx="40" cy="2" r="2.6"/><circle cx="52" cy="-1" r="2.6"/><circle cx="64" cy="2" r="2.6"/></g>
 </svg>`;
 

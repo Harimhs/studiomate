@@ -64,8 +64,8 @@ function flowTick(now) {
   const el = roam.el;
   if (!el || roam.drag || document.hidden) return;
   const still = LS.get('cloudStill', false) || matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const open = document.body.classList.contains('noscroll');
-  if (!still && !open && now > flow.next && Date.now() > roam.pauseUntil && !miraBusy) {
+  const open = document.body.classList.contains('noscroll') || document.body.classList.contains('touring');
+  if (!still && !open && !visit.on && now > flow.next && Date.now() > roam.pauseUntil && !miraBusy) {
     const p = freeSpot();
     if (p) { flow.tx = p.x; flow.ty = p.y; }
     flow.next = now + 7000 + Math.random() * 9000;
@@ -79,30 +79,49 @@ function flowTick(now) {
     flow.bx += dx * pull; flow.by += dy * pull;
     flow.bx = Math.max(bb.minX + 10, Math.min(bb.maxX - 10, flow.bx)); flow.by = Math.max(bb.minY + 8, Math.min(bb.maxY - 8, flow.by));
     const t = now / 1000;
-    roam.x = flow.bx + Math.sin(t * 0.8) * 10;
-    roam.y = flow.by + Math.sin(t * 1.25 + 1.3) * 8;
+    const amp = visit.on || document.body.classList.contains('touring') ? 0.15 : 1;   // nearly still while pointing or touring
+    roam.x = flow.bx + Math.sin(t * 0.8) * 10 * amp;
+    roam.y = flow.by + Math.sin(t * 1.25 + 1.3) * 8 * amp;
     el.style.transform = `translate3d(${roam.x.toFixed(1)}px, ${roam.y.toFixed(1)}px, 0)`;
     if (d > 12 && !el.classList.contains('pointing')) look(dx / d, (dy / d) * 0.8);
   }
   flow.last = now;
 }
-/* when something is overdue and the cloud is near it, one thin arm points at it */
+/* when something is overdue, the cloud visits it: floats to just above it, holds still,
+   and points at the "late" label for a few seconds, then drifts off and comes back later */
+const visit = { on: false, until: 0, next: 0 };
+function visitSpot() {
+  const card = document.body.dataset.mood === 'worried' && !document.body.classList.contains('noscroll') && $('.fu.overdue');
+  if (!card) return null;
+  const r = card.getBoundingClientRect(), b = roamBounds();
+  if (r.top < 150 || r.top > b.maxY + 40) return null;
+  const label = $('.due.overdue', card) || card;
+  const lr = label.getBoundingClientRect();
+  return { x: Math.max(b.minX, Math.min(b.maxX, lr.left + lr.width * 0.35)), y: Math.max(b.minY, r.top - 70), label };
+}
 function pointAtOverdue() {
   const el = roam.el, arm = el && $('.cl-arm', el);
   if (!arm) return;
-  const card = document.body.dataset.mood === 'worried' && !document.body.classList.contains('noscroll') && $('.fu.overdue');
-  const r = card && card.getBoundingClientRect();
-  const visible = r && r.bottom > 70 && r.top < innerHeight - navH() - 20;
-  // the cloud's SVG maps 124 units onto its 84 px box
-  const k = el.clientWidth / 124, cx = roam.x + (52 + 12) * k, cy = roam.y + (47 + 24) * k;
-  const tx = r && r.left + Math.min(r.width * 0.35, 150), ty = r && r.top + r.height / 2;
-  if (!visible || Math.hypot(tx - cx, ty - cy) > 340) { el.classList.remove('pointing'); return; }
-  const right = tx >= cx;
-  const sx = right ? 84 : 20, sy = 52;
+  const now = performance.now();
+  // look the card up fresh each time: the list is redrawn often, and she may scroll
+  const v = visitSpot();
+  if (!visit.on && v && now > visit.next && Date.now() > roam.pauseUntil) { visit.on = true; visit.until = now + 9000; if (typeof jumpToPoint !== 'undefined' && jumpToPoint) place(v.x, v.y); }
+  if (visit.on && (!v || now > visit.until)) {
+    visit.on = false; visit.next = now + 18000 + Math.random() * 12000; flow.next = 0;
+    el.classList.remove('pointing'); return;
+  }
+  if (!visit.on) { el.classList.remove('pointing'); return; }
+  flow.tx = v.x; flow.ty = v.y;
+  // point only once it has arrived
+  if (Math.hypot(flow.tx - flow.bx, flow.ty - flow.by) > 16) { el.classList.remove('pointing'); return; }
+  const lr = v.label.getBoundingClientRect();
+  const tx = lr.left + lr.width * 0.45, ty = lr.top + lr.height * 0.35;
+  const k = el.clientWidth / 124, mid = roam.x + (52 + 12) * k;
+  const sx = tx > mid ? 82 : 22, sy = 60;
   const ang = Math.atan2(ty - (roam.y + (sy + 24) * k), tx - (roam.x + (sx + 12) * k)) * 180 / Math.PI;
   arm.setAttribute('transform', `translate(${sx} ${sy}) rotate(${ang.toFixed(1)})`);
   el.classList.add('pointing');
-  look(Math.cos(ang * Math.PI / 180), Math.sin(ang * Math.PI / 180) * 0.8);
+  look(Math.cos(ang * Math.PI / 180) * 0.8, Math.max(0.3, Math.sin(ang * Math.PI / 180)));
 }
 function look(lx, ly) { const g = roam.el && $('.cl-eyes', roam.el); if (g) g.style.transform = `translate(${(lx * 4).toFixed(1)}px, ${(ly * 3).toFixed(1)}px)`; }
 function lookAt(px, py) {
@@ -113,11 +132,6 @@ function lookAt(px, py) {
 }
 function pickSpot() {
   const b = roamBounds();
-  const od = document.body.dataset.mood === 'worried' && $('.fu.overdue');
-  if (od && Math.random() < 0.5) {
-    const r = od.getBoundingClientRect();
-    if (r.top > 80 && r.top < b.maxY) return { x: Math.min(b.maxX, r.left + r.width * 0.55), y: Math.max(b.minY, r.top - 96) };
-  }
   return { x: b.minX + Math.random() * (b.maxX - b.minX), y: b.minY + Math.pow(Math.random(), 1.5) * (b.maxY - b.minY) };
 }
 /* never park on something she might tap */
@@ -143,11 +157,12 @@ addEventListener('scroll', () => {
 let moodHold = 0;
 function setMood(m) { if (m) document.body.dataset.mood = m; else delete document.body.dataset.mood; }
 function miraNudge() {
-  if (Date.now() < moodHold) return;
+  if (Date.now() < moodHold || !S.followups) return;   // storage may still be opening on first launch
   const h = new Date().getHours();
   const od = S.followups.some(f => isOpen(f) && bucket(f) === 'overdue');
   const td = S.followups.some(f => isOpen(f) && bucket(f) === 'today');
-  setMood(miraBusy ? 'thinking' : h >= 22 || h < 6 ? 'sleepy' : od ? 'worried' : !td ? 'happy' : '');
+  const forced = (location.search.match(/[?&]mood=(\w+)/) || [])[1];   // test switch, like ?sky= and ?tod=
+  setMood(forced || (miraBusy ? 'thinking' : h >= 22 || h < 6 ? 'sleepy' : od ? 'worried' : !td ? 'happy' : ''));
   roam.el && roam.el.setAttribute('aria-label', od ? 'Ask Mira. Something is overdue.' : 'Ask Mira, your assistant');
 }
 function cheer() { moodHold = Date.now() + 4500; setMood('happy'); roam.el && roam.el.classList.add('hop'); setTimeout(() => { roam.el && roam.el.classList.remove('hop'); moodHold = 0; miraNudge(); }, 4500); }
@@ -199,7 +214,7 @@ function openMira() {
   const td = S.followups.filter(f => isOpen(f) && bucket(f) === 'today');
   const hello = miraLog.length ? '' : `<div class="msg mira-msg">Hi${name ? ' ' + esc(name) : ''}! ${od.length ? `${od.length} thing${od.length > 1 ? 's are' : ' is'} overdue${od[0] ? `, starting with <b>${esc(od[0].title)}</b>` : ''}.` : td.length ? `You have ${td.length} follow-up${td.length > 1 ? 's' : ''} today.` : 'Nothing is waiting on you right now.'} What can I do?</div>`;
   const chips = ['What’s pending today?', 'Write a Tamil reminder for my oldest follow-up', 'Ideas for a small pooja unit', 'Which vendor is usually late?'];
-  openSheet(`<div class="mira-head">${MIRA_ICON()}<div><h2>Mira</h2><p class="meta">${skyLine() ? esc(skyLine()) + ' · ' : ''}${aiKey() ? 'Your studio assistant' : 'Add a Gemini key in Settings so I can think with you'}</p></div></div>
+  openSheet(`<div class="mira-head">${MIRA_ICON()}<div><h2>Mira</h2><p class="meta">${skyLine() ? esc(skyLine()) + ' · ' : ''}${aiKey() ? 'Your studio assistant' : 'AI isn’t connected yet; I can still tell you what’s due'}</p></div></div>
     <div class="chat" id="chat">${hello}${miraLog.map(m => msgHtml(m)).join('')}</div>
     <div class="chips chat-chips">${chips.map(c => `<button type="button" class="chip" data-ask="${esc(c)}">${esc(c)}</button>`).join('')}</div>
     <form id="miraForm" class="chat-input" autocomplete="off">
@@ -272,7 +287,7 @@ function offlineReply(q) {
   if (/pending|today|due|overdue/i.test(q)) return od.length || td.length
     ? `${od.length ? `Overdue: ${od.map(f => f.title).join(', ')}. ` : ''}${td.length ? `Today: ${td.map(f => f.title).join(', ')}.` : ''}`
     : 'Nothing pending. Enjoy the quiet.';
-  return 'I can count what’s due without AI, but to write messages and suggest designs I need a Gemini key. Add it in Settings → AI design.';
+  return 'I can tell you what’s due, but writing messages and design ideas need AI, which isn’t connected yet.';
 }
 const findContact = n => n && S.contacts.find(c => c.name.toLowerCase().includes(String(n).toLowerCase().split(' ')[0]));
 function wireActions(root) {
@@ -366,6 +381,7 @@ updateSky().then(miraNudge);
 setInterval(() => { updateSky(); miraNudge(); }, 10 * 60e3);
 const doneBeforeCheer = ACT.oDone;
 ACT.oDone = async id => { await doneBeforeCheer(id); cheer(); };
-// ?point sends the cloud to the overdue item, for showing the pointing hand
-if (/[?&]point\b/.test(location.search)) setTimeout(() => { const c = $('.fu.overdue'); if (!c) return; const r = c.getBoundingClientRect(); flow.tx = r.left + r.width * 0.55; flow.ty = r.top - 96; flow.next = performance.now() + 60000; }, 2500);
+// ?point starts a visit to the overdue item straight away, for showing the hand
+const jumpToPoint = /[?&]point\b/.test(location.search);
+if (jumpToPoint) visit.next = 0;
 if (/[?&]openmira\b/.test(location.search)) setTimeout(() => openMira(), 3200);

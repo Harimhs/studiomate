@@ -5,16 +5,19 @@
 
 const AI_TEXT = ['gemini-3-flash-preview', 'gemini-3.1-flash-lite'];
 const AI_IMAGE = ['gemini-3.1-flash-image', 'gemini-2.5-flash-image'];
-const aiKey = () => LS.get('gkey', '');
+/* The Gemini key is NOT in this app. Calls go to a tiny Cloudflare Worker (worker/) that keeps
+   the key as an encrypted secret and forwards to Google. Set its address here after deploying. */
+const AI_PROXY = '';   // e.g. 'https://studiomate-ai.<your-subdomain>.workers.dev'
+const aiKey = () => AI_PROXY;   // truthy once AI is connected
 
 async function gemini(model, body) {
   // never hang: text answers get 25 s, images 90 s
   const wait = /image/.test(model) ? 90000 : 25000;
   let r;
   try {
-    r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    r = await fetch(`${AI_PROXY}/v1beta/models/${model}:generateContent`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': aiKey() },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(wait),
     });
@@ -49,7 +52,7 @@ function aiError(e, kind) {
   if (e.status === 'RESOURCE_EXHAUSTED') return kind === 'image'
     ? 'Your Gemini key has no image quota. Turn on billing for it in Google AI Studio, then try again.'
     : 'Gemini’s free limit is used up for now. Try again in a minute.';
-  if (e.status === 'PERMISSION_DENIED' || e.status === 'UNAUTHENTICATED' || e.status === 400 || e.status === 'INVALID_ARGUMENT') return 'Gemini refused the key. Check it in Settings.';
+  if (e.status === 'PERMISSION_DENIED' || e.status === 'UNAUTHENTICATED' || e.status === 400 || e.status === 'INVALID_ARGUMENT') return 'The AI service refused the request. It may need setting up again.';
   if (e.status === 'UNAVAILABLE' || e.status === 503 || /high demand|overloaded/i.test(e.message || '')) return 'Gemini is busy right now. Try again in a moment.';
   if (e.status === 'DEADLINE_EXCEEDED') return 'Gemini took too long. Check your signal and try again.';
   if (!navigator.onLine || e.status === 'NETWORK') return 'You’re offline or the signal is weak. AI needs the internet.';
@@ -124,14 +127,14 @@ views.design = (el, id) => {
   // brief: AI first when a key exists
   const apply = $('[data-act="applyBrief"]', el);
   if (apply) {
-    apply.insertAdjacentHTML('beforebegin', `<button class="btn primary" data-act="aiBrief">${I.spark}${has ? 'Design with AI' : 'Design with AI (add key)'}</button>`);
+    apply.insertAdjacentHTML('beforebegin', `<button class="btn primary" data-act="aiBrief">${I.spark}Design with AI</button>`);
     apply.classList.remove('primary');
   }
   // renders section, before the 3D section
   const faces = FACES.slice(0, 4).filter(([f]) => d.faces[f]);
   $('#d-3d', el).insertAdjacentHTML('beforebegin', `<section id="d-render" class="dstep">
     <h2 class="sec">AI renders <span class="count">${Object.keys(d.renders).length}</span></h2>
-    ${!has ? `<div class="empty"><p>Add your Gemini key in Settings to turn each wall photo into a client-ready render with the items you planned.</p><button class="btn" data-act="settings">Open Settings</button></div>`
+    ${!has ? `<div class="empty"><p>AI isn't connected yet. Once it is, each wall photo can become a client-ready render with the items you planned.</p></div>`
     : !faces.length ? '<p class="hint">Add wall photos above, then render each wall.</p>'
     : `<div class="renders">${faces.map(([f, n]) => `<figure class="render" data-face="${f}">
         <div class="render-img">${d.renders[f] ? `<img src="${URL.createObjectURL(d.renders[f])}" alt="AI render of ${n}"><img class="before" src="${faceUrl(d, f)}" alt="${n} before">` : `<img src="${faceUrl(d, f)}" alt="${n} photo">`}</div>
@@ -146,7 +149,7 @@ views.design = (el, id) => {
 let busy = false;
 Object.assign(ACT, {
   aiBrief: async (_, btn) => {
-    if (!aiKey()) return ACT.settings();
+    if (!aiKey()) { toast('AI isn’t connected yet'); return; }
     if (busy) return;
     const d = dsg(), text = $('#brief').value.trim();
     if (!text) { toast('Write what you want in the room first'); $('#brief').focus(); return; }
@@ -199,21 +202,5 @@ document.addEventListener('pointerdown', e => {
   if (im && im.querySelector('.before')) im.classList.add('show-before');
 });
 ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => document.addEventListener(t, () => $$('.show-before').forEach(x => x.classList.remove('show-before')), true));
-
-/* ---------- Settings: the key, kept on this phone ---------- */
-const settingsBase = ACT.settings;
-ACT.settings = () => {
-  settingsBase();
-  const card = $('.sheet-card');
-  const anchor = card && [...$$('.glabel', card)].find(g => g.textContent.trim() === 'Your data');
-  if (!anchor) return;
-  anchor.insertAdjacentHTML('beforebegin', `<p class="glabel" style="margin-top:22px">AI design</p>
-    <label>Gemini API key<div class="row"><input id="stKey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your key" value="${esc(aiKey())}">
-      <button type="button" class="btn icon" id="stKeyShow" aria-label="Show key">${I.search}</button></div></label>
-    <p class="hint" style="margin-top:6px">Stored only on this phone. Used for Design with AI and wall renders. Get one free at aistudio.google.com.</p>`);
-  const inp = $('#stKey', card);
-  inp.oninput = () => LS.set('gkey', inp.value.trim());
-  $('#stKeyShow', card).onclick = () => { inp.type = inp.type === 'password' ? 'text' : 'password'; };
-};
 
 I.spark = svg('<path d="M12 3.5 13.8 9 19.5 10.5 13.8 12 12 17.5 10.2 12 4.5 10.5 10.2 9z"/><path d="M18.5 15.5l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>');
