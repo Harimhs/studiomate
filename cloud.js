@@ -11,11 +11,12 @@ const CLOUD = () => `<svg class="cloud mira" viewBox="-12 -24 124 128" aria-hidd
   <g class="cl-eyes">
     <ellipse class="cl-eye" cx="42" cy="47" rx="4" ry="5.4"/><ellipse class="cl-eye" cx="62" cy="47" rx="4" ry="5.4"/>
     <g class="cl-plead">
-      <ellipse class="pl-eye" cx="42" cy="47" rx="6.6" ry="7.6"/><ellipse class="pl-eye" cx="62" cy="47" rx="6.6" ry="7.6"/>
-      <circle class="pl-hi" cx="39.6" cy="44" r="2.6"/><circle class="pl-hi" cx="59.6" cy="44" r="2.6"/>
-      <circle class="pl-hi sm" cx="44.6" cy="50.2" r="1.2"/><circle class="pl-hi sm" cx="64.6" cy="50.2" r="1.2"/>
-      <path class="pl-tear" d="M36.8 50.5q5.2 4.4 10.4 0M56.8 50.5q5.2 4.4 10.4 0"/>
-      <path class="pl-brow l" d="M35.6 38.4q3.6-4.6 9.8-4.4"/><path class="pl-brow r" d="M68.4 38.4q-3.6-4.6-9.8-4.4"/>
+      <ellipse class="pl-eye" cx="41.5" cy="46.5" rx="7.6" ry="8.6"/><ellipse class="pl-eye" cx="62.5" cy="46.5" rx="7.6" ry="8.6"/>
+      <ellipse class="pl-hi" cx="39" cy="42.6" rx="3.2" ry="3.4"/><ellipse class="pl-hi" cx="60" cy="42.6" rx="3.2" ry="3.4"/>
+      <circle class="pl-hi sm" cx="44.8" cy="50.4" r="1.5"/><circle class="pl-hi sm" cx="65.8" cy="50.4" r="1.5"/>
+      <path class="pl-tear" d="M35.4 50.6q6.1 5.4 12.2 0M56.4 50.6q6.1 5.4 12.2 0"/>
+      <path class="pl-brow l" d="M34.6 37.2q3.8-4.8 10.4-4.6"/><path class="pl-brow r" d="M69.4 37.2q-3.8-4.8-10.4-4.6"/>
+      <path class="pl-mf" d="M47.6 62.6q4.4-3.4 8.8 0"/>
     </g>
     <path class="cl-happy" d="M37.5 48.5q4.5-5.5 9 0M57.5 48.5q4.5-5.5 9 0"/><path class="cl-sleep" d="M37.5 48h9M57.5 48h9"/>
   </g>

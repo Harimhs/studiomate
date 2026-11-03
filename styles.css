@@ -836,3 +836,9 @@ body.noscroll #cloud { opacity: 0; pointer-events: none; }
   .cloud *, #cloud .cloud { animation: none !important; }
   [data-weather="storm"] .cl-bolt, [data-mood="worried"] .cl-sweat, [data-mood="sleepy"] .cl-zzz { opacity: 1; }
 }
+
+/* worried: pleading eyes, soft brows and a small frown (chosen: version 4) */
+.pl-mf { display: none; fill: none; stroke: var(--cl-eye); stroke-width: 2.4; stroke-linecap: round; }
+[data-time="night"] .pl-mf, [data-weather="storm"] .pl-mf { stroke: #15131a; }
+[data-mood="worried"] .pl-mf { display: inline; }
+.pl-mw { display: none; }
