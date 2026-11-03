@@ -8,11 +8,19 @@ const AI_IMAGE = ['gemini-3.1-flash-image', 'gemini-2.5-flash-image'];
 const aiKey = () => LS.get('gkey', '');
 
 async function gemini(model, body) {
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': aiKey() },
-    body: JSON.stringify(body),
-  });
+  // never hang: text answers get 25 s, images 90 s
+  const wait = /image/.test(model) ? 90000 : 25000;
+  let r;
+  try {
+    r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': aiKey() },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(wait),
+    });
+  } catch (err) {
+    throw Object.assign(new Error(err.name === 'TimeoutError' ? 'Gemini took too long' : 'Network error'), { status: err.name === 'TimeoutError' ? 'DEADLINE_EXCEEDED' : 'NETWORK' });
+  }
   const j = await r.json().catch(() => ({}));
   if (!r.ok || j.error) {
     const e = new Error((j.error && j.error.message) || `HTTP ${r.status}`);
@@ -23,8 +31,17 @@ async function gemini(model, body) {
 }
 async function firstModel(models, body) {
   let last;
-  for (const m of models) {
-    try { return await gemini(m, body); } catch (e) { last = e; if (e.status === 'INVALID_ARGUMENT' || e.status === 'PERMISSION_DENIED') break; }
+  // each model once, then one more round after a short pause when Google is busy
+  for (let round = 0; round < 2; round++) {
+    for (const m of models) {
+      try { return await gemini(m, body); }
+      catch (e) {
+        last = e;
+        if (e.status === 'INVALID_ARGUMENT' || e.status === 'PERMISSION_DENIED' || e.status === 'UNAUTHENTICATED') throw e;
+      }
+    }
+    if (last && (last.status === 'UNAVAILABLE' || last.status === 503 || last.status === 'DEADLINE_EXCEEDED')) await new Promise(r => setTimeout(r, 1500));
+    else break;
   }
   throw last;
 }
@@ -33,7 +50,9 @@ function aiError(e, kind) {
     ? 'Your Gemini key has no image quota. Turn on billing for it in Google AI Studio, then try again.'
     : 'Gemini’s free limit is used up for now. Try again in a minute.';
   if (e.status === 'PERMISSION_DENIED' || e.status === 'UNAUTHENTICATED' || e.status === 400 || e.status === 'INVALID_ARGUMENT') return 'Gemini refused the key. Check it in Settings.';
-  if (!navigator.onLine) return 'You’re offline. AI needs the internet.';
+  if (e.status === 'UNAVAILABLE' || e.status === 503 || /high demand|overloaded/i.test(e.message || '')) return 'Gemini is busy right now. Try again in a moment.';
+  if (e.status === 'DEADLINE_EXCEEDED') return 'Gemini took too long. Check your signal and try again.';
+  if (!navigator.onLine || e.status === 'NETWORK') return 'You’re offline or the signal is weak. AI needs the internet.';
   return 'Gemini didn’t answer: ' + String(e.message || e).slice(0, 120);
 }
 
