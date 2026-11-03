@@ -24,8 +24,7 @@ function cloudInit() {
   const home = () => {
     if (!innerWidth || !innerHeight) return requestAnimationFrame(home);
     const b = roamBounds(), saved = LS.get('cloudPos', null);
-    place(saved ? saved.x : b.maxX - 4, saved ? saved.y : b.maxY - 10, true);
-    setTimeout(() => { if (blocks(roam.x, roam.y)) { const p = freeSpot(); if (p) place(p.x, p.y, false); } }, 900);
+    place(saved ? saved.x : b.maxX - 4, saved ? saved.y : b.maxY - 10);
   };
   home();
   el.addEventListener('pointerdown', e => {
@@ -36,7 +35,7 @@ function cloudInit() {
     if (!roam.drag) return;
     const dx = e.clientX - roam.drag.sx, dy = e.clientY - roam.drag.sy;
     if (Math.hypot(dx, dy) > 6) roam.moved = true;
-    if (roam.moved) place(roam.drag.x + dx, roam.drag.y + dy, true);
+    if (roam.moved) place(roam.drag.x + dx, roam.drag.y + dy);
   });
   const drop = () => {
     if (roam.drag && roam.moved) { LS.set('cloudPos', { x: roam.x, y: roam.y }); roam.pauseUntil = Date.now() + 25000; vibe(6); }
@@ -47,17 +46,63 @@ function cloudInit() {
   el.addEventListener('click', e => { if (roam.moved) { roam.moved = false; e.preventDefault(); return; } openMira(); });
   // her finger catches its eye
   document.addEventListener('pointerdown', e => { if (!e.target.closest('#cloud')) lookAt(e.clientX, e.clientY); }, true);
-  addEventListener('resize', () => place(roam.x, roam.y, true));
+  addEventListener('resize', () => place(roam.x, roam.y));
   setInterval(() => { if (!document.hidden && roam.el) { roam.el.classList.add('blink'); setTimeout(() => roam.el.classList.remove('blink'), 150); } }, 3800);
-  scheduleRoam();
+  requestAnimationFrame(flowTick);
+  setInterval(pointAtOverdue, 300);
 }
-function place(x, y, instant) {
-  const b = roamBounds(), el = roam.el;
+/* the cloud drifts all the time: a slow pull toward a goal, plus a gentle wave */
+const flow = { bx: 0, by: 0, tx: 0, ty: 0, next: 0, last: 0 };
+function place(x, y) {
+  const b = roamBounds();
   x = Math.max(b.minX, Math.min(b.maxX, x)); y = Math.max(b.minY, Math.min(b.maxY, y));
-  el.classList.toggle('no-ease', !!instant);
-  if (!instant) { const dx = x - roam.x, dy = y - roam.y, m = Math.hypot(dx, dy) || 1; look(dx / m, dy / m * 0.8); }
-  roam.x = x; roam.y = y;
-  el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+  flow.bx = flow.tx = roam.x = x; flow.by = flow.ty = roam.y = y;
+  roam.el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+}
+function flowTick(now) {
+  requestAnimationFrame(flowTick);
+  const el = roam.el;
+  if (!el || roam.drag || document.hidden) return;
+  const still = LS.get('cloudStill', false) || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const open = document.body.classList.contains('noscroll');
+  if (!still && !open && now > flow.next && Date.now() > roam.pauseUntil && !miraBusy) {
+    const p = freeSpot();
+    if (p) { flow.tx = p.x; flow.ty = p.y; }
+    flow.next = now + 7000 + Math.random() * 9000;
+  }
+  if (!still) {
+    const bb = roamBounds();
+    flow.tx = Math.max(bb.minX + 10, Math.min(bb.maxX - 10, flow.tx)); flow.ty = Math.max(bb.minY + 8, Math.min(bb.maxY - 8, flow.ty));
+    const dx = flow.tx - flow.bx, dy = flow.ty - flow.by, d = Math.hypot(dx, dy);
+    // time-based, so a slow phone that drops frames drifts at the same speed
+    const dt = Math.min(0.5, flow.last ? (now - flow.last) / 1000 : 0.016), pull = 1 - Math.exp(-dt / 1.8);
+    flow.bx += dx * pull; flow.by += dy * pull;
+    flow.bx = Math.max(bb.minX + 10, Math.min(bb.maxX - 10, flow.bx)); flow.by = Math.max(bb.minY + 8, Math.min(bb.maxY - 8, flow.by));
+    const t = now / 1000;
+    roam.x = flow.bx + Math.sin(t * 0.8) * 10;
+    roam.y = flow.by + Math.sin(t * 1.25 + 1.3) * 8;
+    el.style.transform = `translate3d(${roam.x.toFixed(1)}px, ${roam.y.toFixed(1)}px, 0)`;
+    if (d > 12 && !el.classList.contains('pointing')) look(dx / d, (dy / d) * 0.8);
+  }
+  flow.last = now;
+}
+/* when something is overdue and the cloud is near it, one thin arm points at it */
+function pointAtOverdue() {
+  const el = roam.el, arm = el && $('.cl-arm', el);
+  if (!arm) return;
+  const card = document.body.dataset.mood === 'worried' && !document.body.classList.contains('noscroll') && $('.fu.overdue');
+  const r = card && card.getBoundingClientRect();
+  const visible = r && r.bottom > 70 && r.top < innerHeight - navH() - 20;
+  // the cloud's SVG maps 124 units onto its 84 px box
+  const k = el.clientWidth / 124, cx = roam.x + (52 + 12) * k, cy = roam.y + (47 + 24) * k;
+  const tx = r && r.left + Math.min(r.width * 0.35, 150), ty = r && r.top + r.height / 2;
+  if (!visible || Math.hypot(tx - cx, ty - cy) > 340) { el.classList.remove('pointing'); return; }
+  const right = tx >= cx;
+  const sx = right ? 84 : 20, sy = 52;
+  const ang = Math.atan2(ty - (roam.y + (sy + 24) * k), tx - (roam.x + (sx + 12) * k)) * 180 / Math.PI;
+  arm.setAttribute('transform', `translate(${sx} ${sy}) rotate(${ang.toFixed(1)})`);
+  el.classList.add('pointing');
+  look(Math.cos(ang * Math.PI / 180), Math.sin(ang * Math.PI / 180) * 0.8);
 }
 function look(lx, ly) { const g = roam.el && $('.cl-eyes', roam.el); if (g) g.style.transform = `translate(${(lx * 4).toFixed(1)}px, ${(ly * 3).toFixed(1)}px)`; }
 function lookAt(px, py) {
@@ -68,15 +113,12 @@ function lookAt(px, py) {
 }
 function pickSpot() {
   const b = roamBounds();
-  // when something is overdue, it sometimes floats over to it
-  const od = $('.fu.overdue');
-  if (od && Math.random() < 0.45) {
+  const od = document.body.dataset.mood === 'worried' && $('.fu.overdue');
+  if (od && Math.random() < 0.5) {
     const r = od.getBoundingClientRect();
-    if (r.top > 120 && r.top < b.maxY) return { x: r.right - 84, y: r.top - 58 };
+    if (r.top > 80 && r.top < b.maxY) return { x: Math.min(b.maxX, r.left + r.width * 0.55), y: Math.max(b.minY, r.top - 96) };
   }
-  // otherwise it keeps to the edges, so it never sits on what she is reading
-  const edge = Math.random() < 0.5 ? b.minX + Math.random() * 24 : b.maxX - Math.random() * 24;
-  return { x: Math.random() < 0.8 ? edge : b.minX + Math.random() * (b.maxX - b.minX), y: b.minY + Math.random() * (b.maxY - b.minY) };
+  return { x: b.minX + Math.random() * (b.maxX - b.minX), y: b.minY + Math.pow(Math.random(), 1.5) * (b.maxY - b.minY) };
 }
 /* never park on something she might tap */
 const TAPPABLE = 'button, a, input, select, textarea, label, .fu-main, .chip, .thumb, .mcard, .dec, .site-row, .step';
@@ -95,18 +137,9 @@ function freeSpot() {
 let scrollT;
 addEventListener('scroll', () => {
   clearTimeout(scrollT);
-  scrollT = setTimeout(() => { if (roam.el && !roam.drag && blocks(roam.x, roam.y)) { const p = freeSpot(); if (p) place(p.x, p.y, false); } }, 250);
+  scrollT = setTimeout(() => { if (roam.el && !roam.drag && blocks(roam.x, roam.y)) { const p = freeSpot(); if (p) { flow.tx = p.x; flow.ty = p.y; } } }, 250);
 }, { passive: true });
 
-function scheduleRoam() { clearTimeout(roam.timer); roam.timer = setTimeout(roamStep, 6000 + Math.random() * 7000); }
-function roamStep() {
-  const still = LS.get('cloudStill', false) || matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!document.hidden && !document.body.classList.contains('noscroll') && !still && Date.now() > roam.pauseUntil && !miraBusy) {
-    const p = freeSpot();
-    if (p) { place(p.x, p.y, false); setTimeout(() => look(0, 0), 3000); }
-  } else if (!still) look(Math.random() * 2 - 1, (Math.random() * 2 - 1) * 0.5);
-  scheduleRoam();
-}
 let moodHold = 0;
 function setMood(m) { if (m) document.body.dataset.mood = m; else delete document.body.dataset.mood; }
 function miraNudge() {
@@ -311,7 +344,7 @@ window.addEventListener('hashchange', () => { viaNav = true; }, true);
 render = function (focusId) {
   const run = () => {
     renderBeforeFeel(focusId); wireSwipes(); miraNudge();
-    setTimeout(() => { if (roam.el && !roam.drag && blocks(roam.x, roam.y)) { const p = freeSpot(); if (p) place(p.x, p.y, false); } }, 400);
+    setTimeout(() => { if (roam.el && !roam.drag && blocks(roam.x, roam.y)) { const p = freeSpot(); if (p) { flow.tx = p.x; flow.ty = p.y; } } }, 400);
   };
   if (viaNav && document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) { viaNav = false; document.startViewTransition(run); }
   else { viaNav = false; run(); }
@@ -333,4 +366,6 @@ updateSky().then(miraNudge);
 setInterval(() => { updateSky(); miraNudge(); }, 10 * 60e3);
 const doneBeforeCheer = ACT.oDone;
 ACT.oDone = async id => { await doneBeforeCheer(id); cheer(); };
+// ?point sends the cloud to the overdue item, for showing the pointing hand
+if (/[?&]point\b/.test(location.search)) setTimeout(() => { const c = $('.fu.overdue'); if (!c) return; const r = c.getBoundingClientRect(); flow.tx = r.left + r.width * 0.55; flow.ty = r.top - 96; flow.next = performance.now() + 60000; }, 2500);
 if (/[?&]openmira\b/.test(location.search)) setTimeout(() => openMira(), 3200);

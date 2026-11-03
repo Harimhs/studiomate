@@ -11,17 +11,18 @@ const CLOUD = () => `<svg class="cloud mira" viewBox="-12 -24 124 128" aria-hidd
   <g class="cl-eyes">
     <ellipse class="cl-eye" cx="42" cy="47" rx="4" ry="5.4"/><ellipse class="cl-eye" cx="62" cy="47" rx="4" ry="5.4"/>
     <g class="cl-plead">
-      <ellipse class="pl-eye" cx="41.5" cy="46.5" rx="7.6" ry="8.6"/><ellipse class="pl-eye" cx="62.5" cy="46.5" rx="7.6" ry="8.6"/>
-      <ellipse class="pl-hi" cx="39" cy="42.6" rx="3.2" ry="3.4"/><ellipse class="pl-hi" cx="60" cy="42.6" rx="3.2" ry="3.4"/>
-      <circle class="pl-hi sm" cx="44.8" cy="50.4" r="1.5"/><circle class="pl-hi sm" cx="65.8" cy="50.4" r="1.5"/>
-      <path class="pl-tear" d="M35.4 50.6q6.1 5.4 12.2 0M56.4 50.6q6.1 5.4 12.2 0"/>
-      <path class="pl-brow l" d="M34.6 37.2q3.8-4.8 10.4-4.6"/><path class="pl-brow r" d="M69.4 37.2q-3.8-4.8-10.4-4.6"/>
-      <path class="pl-mf" d="M47.6 62.6q4.4-3.4 8.8 0"/>
+      <ellipse class="pl-eye" cx="42" cy="47" rx="5.6" ry="6.4"/><ellipse class="pl-eye" cx="62" cy="47" rx="5.6" ry="6.4"/>
+      <ellipse class="pl-hi" cx="40.2" cy="44.2" rx="2.3" ry="2.5"/><ellipse class="pl-hi" cx="60.2" cy="44.2" rx="2.3" ry="2.5"/>
+      <circle class="pl-hi sm" cx="44.2" cy="50" r="1.1"/><circle class="pl-hi sm" cx="64.2" cy="50" r="1.1"/>
+      <path class="pl-tear" d="M37.4 50.4q4.6 4 9.2 0M57.4 50.4q4.6 4 9.2 0"/>
+      <path class="pl-brow l" d="M36 38.6q3.4-4.2 9.2-4"/><path class="pl-brow r" d="M68 38.6q-3.4-4.2-9.2-4"/>
+      <path class="pl-mf" d="M48 61q4-3 8 0"/>
     </g>
     <path class="cl-happy" d="M37.5 48.5q4.5-5.5 9 0M57.5 48.5q4.5-5.5 9 0"/><path class="cl-sleep" d="M37.5 48h9M57.5 48h9"/>
   </g>
   <path class="cl-sweat" d="M78 22c5 6.5 7 10.5 3.6 14a5 5 0 0 1-7.4-6.4c.6-2.4 2-4.6 3.8-7.6z"/>
   <g class="cl-zzz"><text x="76" y="22">z</text><text x="90" y="6" class="big">Z</text></g>
+  <g class="cl-arm" transform="translate(84 52)"><path class="arm-line" d="M0 0q15-7 32-2"/><g transform="translate(32 -2)"><g class="arm-hand"><circle r="3.8"/><path d="M2-2.4l7-4.6M3.2 0h9M2 2.4l7 4.6"/></g></g></g>
   <g class="cl-dots"><circle cx="40" cy="2" r="2.6"/><circle cx="52" cy="-1" r="2.6"/><circle cx="64" cy="2" r="2.6"/></g>
 </svg>`;
 
