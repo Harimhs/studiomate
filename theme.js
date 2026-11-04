@@ -1,5 +1,5 @@
 'use strict';
-/* StudioMate visual layer: every screen gets a material colour and an architectural line drawing.
+/* Coffee Break visual layer: every screen gets a material colour and an architectural line drawing.
    Today = sage, Follow-ups = terracotta, Library = walnut, Materials = ochre stone, People = teal.
    Loaded last; it only decorates what app.js and features.js render. */
 

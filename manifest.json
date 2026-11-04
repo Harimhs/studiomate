@@ -1,6 +1,6 @@
 {
-  "name": "StudioMate",
-  "short_name": "StudioMate",
+  "name": "Coffee Break",
+  "short_name": "Coffee Break",
   "description": "Follow-ups, inspiration, material samples and trusted people near your sites.",
   "start_url": "./#today",
   "scope": "./",

@@ -1,5 +1,5 @@
 'use strict';
-/* StudioMate Design studio: room photos on each surface, room size, a 3D room built from the photos,
+/* Coffee Break Design studio: room photos on each surface, room size, a 3D room built from the photos,
    items placed from a written brief, and 2D skeleton drawings (plan + four elevations) as DXF / SVG / print.
    All units are millimetres. Walls are numbered clockwise in plan: 1 top, 2 right, 3 bottom, 4 left.
    "Offset" is measured from the left end of a wall as you stand in the room facing it. */
@@ -449,7 +449,7 @@ function prims(d) {
     vdim(y0, y0 + H, -350);
     y0 += H + 2100;
   }
-  text(0, y0 - 600, `StudioMate · ${d.name} · ${d.L} × ${d.W} × ${d.H} mm · ${fmtLong(today())} · not to scale on screen, true size in DXF`, 80, 'start', 'mute');
+  text(0, y0 - 600, `Coffee Break · ${d.name} · ${d.L} × ${d.W} × ${d.H} mm · ${fmtLong(today())} · not to scale on screen, true size in DXF`, 80, 'start', 'mute');
   return P;
 }
 function bounds(P) {

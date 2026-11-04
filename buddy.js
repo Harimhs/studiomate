@@ -286,7 +286,7 @@ async function ask(q) {
 }
 async function miraThink(q) {
   const history = miraLog.slice(-8, -1).map(m => `${m.role === 'user' ? 'Designer' : 'Pebble'}: ${m.text}`).join('\n');
-  const prompt = `You are Pebble, a warm, brief assistant inside StudioMate, the phone app of a senior interior designer in Chennai who works on full homes.
+  const prompt = `You are Pebble, a warm, brief assistant inside Coffee Break, the phone app of a senior interior designer in Chennai who works on full homes.
 Answer in 1-4 short sentences unless asked for more. Use the designer's data below; never invent vendors, prices or dates that are not there. If she writes in Tamil or Tanglish, reply the same way.
 When she clearly asks to remember, add or chase something, propose an action. Actions are only suggestions until she taps them: never say you have saved, set or sent anything; say “Tap Add to save it” or “Tap Open WhatsApp to send it”. If she asks for Tamil, write the message in Tamil script; use Tanglish only if she asks for Tanglish. When she asks you to write a message to a vendor or client, put the full message text in the action's "text" and name the contact. Dates are YYYY-MM-DD.
 ${contextFor()}

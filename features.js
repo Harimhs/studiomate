@@ -1,5 +1,5 @@
 'use strict';
-/* StudioMate, part two: the site page (client decisions, budget, follow-ups), collection boards,
+/* Coffee Break, part two: the site page (client decisions, budget, follow-ups), collection boards,
    undo instead of confirm(), the first-run welcome and sites on Today.
    Loaded after app.js and uses its helpers (S, save, remove, openSheet, render, views, ACT, I…). */
 
@@ -252,7 +252,7 @@ ACT.libOpen = id => {
 /* ---------- Today: first-run welcome, and her sites ---------- */
 function welcome() {
   const canNotify = 'Notification' in window && Notification.permission === 'default';
-  return `<section class="hero"><h1 class="greet">Welcome to StudioMate.</h1>
+  return `<section class="hero"><h1 class="greet">Welcome to Coffee Break.</h1>
       <p class="finding">Your vendors, samples, sites and client choices, together on your phone.</p></section>
     <div class="steps">
       <button class="step" data-act="settings">${I.user}<span><b>Add your name</b><small>So Today can greet you</small></span></button>

@@ -474,7 +474,7 @@ function vLibrary(el) {
     </div>` : ''}
     ${items.length ? `<div class="grid">${items.map(libThumb).join('')}</div>` : `<div class="empty">
       <p>${S.library.length ? 'No matches. Try another word.' : 'Save your Pinterest finds and site photos here, tagged by room and style, so you can pull them up in seconds.'}</p>
-      ${S.library.length ? '' : '<button class="btn primary" data-act="addImages">Add images</button><p class="hint">Tip: after installing, use “Share, then StudioMate” from Pinterest or your gallery.</p>'}</div>`}
+      ${S.library.length ? '' : '<button class="btn primary" data-act="addImages">Add images</button><p class="hint">Tip: after installing, use “Share, then Coffee Break” from Pinterest or your gallery.</p>'}</div>`}
     ${S.sessions.length ? `<h2 class="sec">Client sessions</h2>${[...S.sessions].sort((a, b) => b.created - a.created).map(sessCard).join('')}` : ''}`;
   const q = $('#libQ', el);
   if (q) q.oninput = debounce(() => { libQ = q.value; render('libQ'); }, 300);
@@ -995,7 +995,7 @@ function settingsSheet() {
     <p class="glabel" style="margin-top:22px">Demo</p>
     <div class="row" style="flex-wrap:wrap"><button class="btn" data-act="sample">Load sample data</button><button class="btn danger ghost" data-act="unsample">Remove sample data</button></div>
     <div class="actions"><button class="btn primary" id="stSave">Done</button></div>
-    <p class="hint" style="text-align:center;margin-top:18px">StudioMate · early access</p>`, card => {
+    <p class="hint" style="text-align:center;margin-top:18px">Coffee Break · early access</p>`, card => {
     $('#stSave', card).onclick = () => {
       LS.set('name', $('#stName', card).value.trim());
       LS.set('remTime', $('#stTime', card).value || '09:30');
@@ -1032,7 +1032,7 @@ function importData() {
   i.onchange = async () => {
     try {
       const j = JSON.parse(await i.files[0].text());
-      if (j.app !== 'studiomate') throw new Error('Not a StudioMate backup');
+      if (j.app !== 'studiomate') throw new Error('Not a Coffee Break backup');
       let n = 0;
       for (const [s, arr] of Object.entries(j.data)) {
         if (!STORES.includes(s)) continue;
@@ -1256,7 +1256,7 @@ async function processInbox() {
     await DB.open();
     await load();
   } catch (e) {
-    $('#view').innerHTML = `<div class="empty"><p>Storage is blocked in this browser, so StudioMate can’t save data. Try opening it in Chrome (not incognito).</p></div>`;
+    $('#view').innerHTML = `<div class="empty"><p>Storage is blocked in this browser, so Coffee Break can’t save data. Try opening it in Chrome (not incognito).</p></div>`;
     return;
   }
   // ?demo fills an empty app with the sample data, for showing it to someone

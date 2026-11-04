@@ -3,7 +3,7 @@
    Each step: go to the right place, light up one real control, and say what it is for
    and what to do in two short lines. Previous / Next on every step; Settings → User guide replays it. */
 
-const APP_NAME = 'StudioMate';
+const APP_NAME = 'Coffee Break';
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const visible = el => !!el && el.getClientRects().length > 0;
 const first = (...sels) => { for (const s of sels) { const e = $$(s).find(visible); if (e) return e; } return null; };
@@ -210,7 +210,11 @@ ACT.settings = () => {
 
 // ?tour=N opens the guide at step N, for screenshots and checks
 const tourQ = location.search.match(/[?&]tour=(\d+)/);
+if (tourQ) history.replaceState(null, '', location.pathname + location.hash);   // so a refresh does not reopen it
 const dataReady = async () => { while (!S.followups) await wait(100); };
 if (tourQ) setTimeout(async () => { await dataReady(); if (!S.followups.some(f => f.sample)) await loadSample(); startTour(); await wait(400); showStep(Math.min(STEPS.length, +tourQ[1]) - 1); }, 1400);
 // first time only, once the app has drawn
 if (!LS.get('toured', false) && !/[?&](demo|point|openmira|tour)\b/.test(location.search)) setTimeout(welcomeAsk, 1200);
+
+// ask Chrome to keep her data even when the phone runs low on space
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});

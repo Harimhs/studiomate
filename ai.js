@@ -1,5 +1,5 @@
 'use strict';
-/* StudioMate AI: Gemini reads the design brief into items (text model) and renders a wall photo
+/* Coffee Break AI: Gemini reads the design brief into items (text model) and renders a wall photo
    with the planned items (image model). The key lives only in this phone's storage, never in the code.
    Calls go straight from the phone to Google's Generative Language API. */
 
