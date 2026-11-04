@@ -6,7 +6,7 @@
 /* ---------- Pebble itself: an original drawing, coloured by the screen ---------- */
 const MIRA_ICON = CLOUD;
 
-let miraLog = [];   // this session's conversation
+let miraLog = [];   // loaded from storage on boot
 let miraBusy = false;
 const vibe = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch { /* not allowed */ } };
 
@@ -213,8 +213,10 @@ async function updateSky() {
 const skyLine = () => sky ? `${WX_WORDS[wxKind(sky)]} in ${sky.place}, ${Math.round(sky.temp)}°` : '';
 
 /* what Pebble knows: a short summary of the designer's own data */
+const aiSeesData = () => LS.get('aiData', true);
 function contextFor() {
   const t = today();
+  if (!aiSeesData()) return `Today is ${t} (${new Date().toLocaleDateString('en-IN', { weekday: 'long' })}).${sky ? ` Weather: ${skyLine()}.` : ''}\nThe designer has turned off sharing her work, so you do not have her follow-ups, clients, prices or samples. Answer general interior-design questions and offer to help, but do not claim to see her data.`;
   const fu = openFollowups().slice(0, 25).map(f => `- ${f.title} | ${contact(f.contactId)?.name || 'no contact'} | ${site(f.siteId)?.name || 'no site'} | due ${f.due}${f.due < t ? ' (OVERDUE)' : ''}`).join('\n');
   const sites = S.sites.map(s => {
     const decs = S.decisions.filter(d => d.siteId === s.id && !d.replacedBy).map(d => `${d.room}: ${d.item} = ${d.choice}${d.cost ? ' ₹' + d.cost : ''}`).join('; ');
@@ -232,8 +234,9 @@ function openMira() {
   const od = S.followups.filter(f => isOpen(f) && bucket(f) === 'overdue');
   const td = S.followups.filter(f => isOpen(f) && bucket(f) === 'today');
   const hello = miraLog.length ? '' : `<div class="msg mira-msg">Hi${name ? ' ' + esc(name) : ''}! ${od.length ? `${od.length} thing${od.length > 1 ? 's are' : ' is'} overdue${od[0] ? `, starting with <b>${esc(od[0].title)}</b>` : ''}.` : td.length ? `You have ${td.length} follow-up${td.length > 1 ? 's' : ''} today.` : 'Nothing is waiting on you right now.'} What can I do?</div>`;
-  const chips = ['What’s pending today?', 'Write a Tamil reminder for my oldest follow-up', 'Ideas for a small pooja unit', 'Which vendor is usually late?'];
-  openSheet(`<div class="mira-head">${MIRA_ICON()}<div><h2>Pebble</h2><p class="meta">${skyLine() ? esc(skyLine()) + ' · ' : ''}${aiKey() ? 'Your studio assistant' : 'AI isn’t connected yet; I can still tell you what’s due'}</p></div></div>
+  const base = ['What’s pending today?', 'Which days am I free this week?', 'Write a Tamil reminder for my oldest follow-up', 'Ideas for a small pooja unit', 'Which vendor is usually late?', 'Summarise the Adyar site for me'];
+  const chips = aiSeesData() ? base : ['Ideas for a small pooja unit', 'Trending kitchen laminate colours', 'How to style a narrow living room'];
+  openSheet(`<div class="mira-head">${MIRA_ICON()}<div><h2>Pebble</h2><p class="meta">${skyLine() ? esc(skyLine()) + ' · ' : ''}${!aiSeesData() ? 'Private mode: I can’t see your work' : aiKey() ? 'Your studio assistant' : 'AI isn’t connected yet; I can still tell you what’s due'}</p></div>${miraLog.length ? '<button type="button" class="btn small" data-act="clearChat">Clear</button>' : ''}</div>
     <div class="chat" id="chat">${hello}${miraLog.map(m => msgHtml(m)).join('')}</div>
     <div class="chips chat-chips">${chips.map(c => `<button type="button" class="chip" data-ask="${esc(c)}">${esc(c)}</button>`).join('')}</div>
     <form id="miraForm" class="chat-input" autocomplete="off">
@@ -266,6 +269,7 @@ async function ask(q) {
   if (miraBusy) return;
   const chat = $('#chat');
   miraLog.push({ role: 'user', text: q });
+  saveChat();
   chat.insertAdjacentHTML('beforeend', msgHtml({ role: 'user', text: q }) + '<div class="msg mira-msg typing" id="typing"><i></i><i></i><i></i></div>');
   $('#miraQ').value = '';
   chat.scrollTop = chat.scrollHeight;
@@ -278,6 +282,7 @@ async function ask(q) {
   finally { miraBusy = false; $('#cloud')?.classList.remove('thinking'); miraNudge(); $('.mira-head .mira')?.classList.remove('thinking'); }
   m.id = uid(); m.role = 'mira';
   miraLog.push(m);
+  saveChat();
   $('#typing')?.remove();
   chat.insertAdjacentHTML('beforeend', msgHtml(m));
   chat.scrollTop = chat.scrollHeight;
@@ -393,9 +398,16 @@ ACT.settings = () => {
   if (!anchor) return;
   anchor.insertAdjacentHTML('beforebegin', `<label class="check" style="margin-top:18px"><input type="checkbox" id="stCloud" ${LS.get('cloudStill', false) ? '' : 'checked'}> Let Pebble the cloud wander around the screen</label>`);
   $('#stCloud', card).onchange = e => { LS.set('cloudStill', !e.target.checked); if (!e.target.checked) LS.set('cloudPos', { x: roam.x, y: roam.y }); };
+  $('#stCloud', card).closest('label').insertAdjacentHTML('afterend', `<label class="check" style="margin-top:12px"><input type="checkbox" id="stAiData" ${aiSeesData() ? 'checked' : ''}> Let Pebble read my work to answer about my sites and vendors</label><p class="hint" style="margin-top:4px">When on, your question and a summary of your follow-ups, sites, prices and samples are sent to the AI service. Turn off to keep Pebble to general design help only.</p>`);
+  $('#stAiData', card).onchange = e => LS.set('aiData', e.target.checked);
 };
 I.send = svg('<path d="M4.5 12 19.5 5l-4 14-3.5-5.5z"/><path d="m12 13.5 7.5-8.5"/>');
+async function saveChat() { try { await DB.put('meta', { id: 'chat', log: miraLog.slice(-40) }); } catch { /* storage busy */ } }
+async function loadChat() { try { const m = await DB.get('meta', 'chat'); if (m && Array.isArray(m.log)) miraLog = m.log; } catch { /* none yet */ } }
+async function clearChat() { miraLog = []; await saveChat(); openMira(); }
+ACT.clearChat = () => clearChat();
 cloudInit();
+loadChat();
 updateSky().then(miraNudge);
 setInterval(() => { updateSky(); miraNudge(); }, 10 * 60e3);
 const doneBeforeCheer = ACT.oDone;
