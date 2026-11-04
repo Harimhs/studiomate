@@ -7,7 +7,7 @@ const AI_TEXT = ['gemini-3-flash-preview', 'gemini-3.1-flash-lite'];
 const AI_IMAGE = ['gemini-3.1-flash-image', 'gemini-2.5-flash-image'];
 /* The Gemini key is NOT in this app. Calls go to a tiny Cloudflare Worker (worker/) that keeps
    the key as an encrypted secret and forwards to Google. Set its address here after deploying. */
-const AI_PROXY = '';   // e.g. 'https://studiomate-ai.<your-subdomain>.workers.dev'
+const AI_PROXY = 'https://studiomate-ai.hari-studio.workers.dev';   // e.g. 'https://studiomate-ai.<your-subdomain>.workers.dev'
 const aiKey = () => AI_PROXY;   // truthy once AI is connected
 
 async function gemini(model, body) {
