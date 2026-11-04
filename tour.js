@@ -71,6 +71,9 @@ const STEPS = [
   { title: 'A sample room', at: () => $('#cross'), go: () => go('#design/sdr1'),
     b: ['Six photos of a half-built room, each placed on its wall. Drag one to fix a wrong place.', 'Scroll down for the 3D view, the furniture from the brief and the drawings to download.'] },
 
+  { title: 'Before and after', at: () => $('#d-render .render'), go: async () => { await go('#design/sdr1'); $('#d-render')?.scrollIntoView({ block: 'start' }); await wait(200); },
+    b: ['Each wall photo turned into the finished room, keeping its real doors and windows.', 'Hold a picture to see the site as it is now; tap Save to show the client.'] },
+
   // ---- library and samples
   { title: 'Library', at: () => $('.lib-seg'), go: () => go('#library'),
     b: ['Inspiration holds your Pinterest finds and site photos; Samples holds materials.', 'Switch between them here.'] },

@@ -115,6 +115,27 @@ Natural daylight plus warm lighting. No people, no text, no labels, no watermark
   return await (await fetch(`data:${data.mimeType || data.mime_type};base64,${data.data}`)).blob();
 }
 
+/* free, from her photo: Cloudflare FLUX.2 [klein] edits the real wall photo into the finished interior */
+async function cfEdit(d, face) {
+  const photo = d.faces[face];
+  const on = d.items.filter(i => i.wall === face);
+  const ceil = d.items.find(i => i.wall === 'ceiling');
+  const list = on.map(i => `${i.finish ? i.finish + ' ' : ''}${i.name.toLowerCase()} about ${i.w} mm wide`).join(', ');
+  const prompt = 'Turn this unfinished room into the finished interior, keeping the exact same room, walls, door and window openings and camera angle. ' +
+    (list ? `Add on the facing wall: ${list}. ` : '') + (ceil ? 'Gypsum false ceiling with warm cove lighting. ' : '') +
+    `Style: ${d.brief || 'contemporary Indian home, warm and calm'}. Finished painted walls, fitted switch plates, clean tiled floor, photorealistic interior photography, soft daylight. No people, no text.`;
+  // shrink the photo before sending
+  const bmp = await createImageBitmap(photo);
+  const sc = Math.min(1, 768 / Math.max(bmp.width, bmp.height));
+  const cv = document.createElement('canvas'); cv.width = Math.round(bmp.width * sc); cv.height = Math.round(bmp.height * sc);
+  cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
+  const small = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.88));
+  const r = await fetch(`${AI_PROXY}/cf-edit`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: prompt.slice(0, 1900), image: await blobToB64(small) }), signal: AbortSignal.timeout(90000) });
+  if (!r.ok) throw Object.assign(new Error('Free render failed'), { status: r.status });
+  return await r.blob();
+}
+
 /* free fallback: Cloudflare Workers AI draws the room from the brief (not from the photo) */
 async function cfRender(d, face) {
   const len = wallLen(d, face);
@@ -152,7 +173,7 @@ views.design = (el, id) => {
     : !faces.length ? '<p class="hint">Add wall photos above, then render each wall.</p>'
     : `<div class="renders">${faces.map(([f, n]) => `<figure class="render" data-face="${f}">
         <div class="render-img">${d.renders[f] ? `<img src="${URL.createObjectURL(d.renders[f])}" alt="AI render of ${n}"><img class="before" src="${faceUrl(d, f)}" alt="${n} before">` : `<img src="${faceUrl(d, f)}" alt="${n} photo">`}</div>
-        <figcaption><b>${n}</b>${d.renders[f] ? (d.freeRenders && d.freeRenders[f] ? '<small>Free render from your brief</small>' : '<small>Hold to see before</small>') : `<small>${d.items.filter(i => i.wall === f).length} items planned</small>`}
+        <figcaption><b>${n}</b>${d.renders[f] ? (d.freeRenders && d.freeRenders[f] === 'brief' ? '<small>Free render from your brief</small>' : '<small>Hold to see before</small>') : `<small>${d.items.filter(i => i.wall === f).length} items planned</small>`}
           <button class="btn small ${d.renders[f] ? '' : 'primary'}" data-act="aiRender" data-id="${f}">${I.spark}${d.renders[f] ? 'Again' : 'Render'}</button>
           ${d.renders[f] ? `<button class="btn small" data-act="saveRender" data-id="${f}">Save</button>` : ''}</figcaption></figure>`).join('')}</div>`}
   </section>`);
@@ -193,12 +214,13 @@ Object.assign(ACT, {
       try { d.renders[face] = await aiRender(d, face); }
       catch (e) {
         if (e.status !== 'RESOURCE_EXHAUSTED' && e.status !== 'NO_IMAGE') throw e;
-        d.renders[face] = await cfRender(d, face);   // free fallback, drawn from the brief
-        (d.freeRenders = d.freeRenders || {})[face] = true;
+        d.freeRenders = d.freeRenders || {};
+        try { d.renders[face] = await cfEdit(d, face); d.freeRenders[face] = 'photo'; }          // free, from her photo
+        catch { d.renders[face] = await cfRender(d, face); d.freeRenders[face] = 'brief'; }      // free, from the brief only
       }
       await save('designs', d);
       render();
-      toast(d.freeRenders && d.freeRenders[face] ? `${FACE_NAME[face]}: free render from your brief` : `${FACE_NAME[face]} rendered`);
+      toast(d.freeRenders && d.freeRenders[face] === 'brief' ? `${FACE_NAME[face]}: free render from your brief` : `${FACE_NAME[face]} rendered`);
     } catch (e) {
       const msg = aiError(e, 'image');
       if (e.status === 'RESOURCE_EXHAUSTED') openSheet(`<h2>Renders need image quota</h2><p class="note">${esc(msg)}</p>

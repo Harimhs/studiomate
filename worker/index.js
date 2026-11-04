@@ -31,6 +31,26 @@ export default {
       const bytes = Uint8Array.from(atob(out.image), c => c.charCodeAt(0));
       return new Response(bytes, { headers: { ...cors, 'Content-Type': 'image/jpeg' } });
     }
+    // free "after" render from her real photo: POST /cf-edit {prompt, image (base64 jpeg)}
+    // FLUX.2 [klein] takes the photo as a reference and edits it, keeping the room
+    if (url.pathname === '/cf-edit') {
+      const { prompt, image } = await req.json().catch(() => ({}));
+      if (!prompt || !image || image.length > 6_000_000) return new Response('Bad request', { status: 400, headers: cors });
+      const photo = new Blob([Uint8Array.from(atob(image), c => c.charCodeAt(0))], { type: 'image/jpeg' });
+      const fd = new FormData();
+      fd.append('prompt', prompt);
+      fd.append('input_image_0', photo, 'room.jpg');
+      fd.append('width', '1024'); fd.append('height', '1024');
+      const form = new Response(fd);
+      let out;
+      try {
+        out = await env.AI.run('@cf/black-forest-labs/flux-2-klein-4b', { multipart: { body: form.body, contentType: form.headers.get('content-type') } });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: String(err && err.message || err) }), { status: 502, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+      const bytes = Uint8Array.from(atob(out.image), c => c.charCodeAt(0));
+      return new Response(bytes, { headers: { ...cors, 'Content-Type': 'image/jpeg' } });
+    }
     const m = url.pathname.match(/^\/v1beta\/models\/([\w.-]+):generateContent$/);
     if (!m || !MODELS.has(m[1])) return new Response('Not found', { status: 404, headers: cors });
 

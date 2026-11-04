@@ -571,7 +571,12 @@ loadSample = async function () {
     { id: 'si5', type: 'tv', name: 'TV unit', wall: 'w4', w: 1800, h: 450, d: 400, e: 250, off: 750, c: '#6b4a33', finish: 'walnut' },
     { id: 'si6', type: 'ceiling', name: 'False ceiling', wall: 'ceiling', w: 0, h: 100, d: 0, e: 0, off: 0, c: '#ffffff', finish: '', b: 600 },
   ];
-  await save('designs', { id: 'sdr1', name: 'Master bedroom', siteId: 'ss1', L: 3600, W: 3300, H: 2900, faces, tray: [], items,
+  // finished "after" renders of each wall, made from these photos
+  const renders = {}, freeRenders = {};
+  for (const f of ['w1', 'w2', 'w3', 'w4']) {
+    try { const r = await fetch(`sample/after-${f}.jpg`); if (r.ok) { renders[f] = await r.blob(); freeRenders[f] = 'photo'; } } catch { /* offline */ }
+  }
+  await save('designs', { id: 'sdr1', name: 'Master bedroom', siteId: 'ss1', L: 3600, W: 3300, H: 2900, faces, tray: [], items, renders, freeRenders,
     brief: 'Warm, calm master bedroom: walnut wardrobe with loft, bed facing the TV wall, small study corner, cove false ceiling, beige walls.',
     created: Date.now(), sample: true });
 };
