@@ -1,5 +1,5 @@
 /* StudioMate service worker: offline shell, "Share to StudioMate", background reminders */
-const V = 'sm-v19';
+const V = 'sm-v20';
 const SHELL = ['./', 'index.html', 'app.js', 'features.js', 'theme.js', 'cloud.js', 'buddy.js', 'tour.js', 'design.js', 'ai.js', 'styles.css', 'manifest.json', 'icon-192.png', 'icon-512.png'];
 const STORES = ['contacts', 'sites', 'followups', 'library', 'materials', 'sessions', 'inbox', 'meta', 'decisions', 'boards', 'designs'];
 

@@ -1,5 +1,5 @@
 'use strict';
-/* Mira's cloud: the body, the eyes, and the layers that weather, time of day and moods switch on.
+/* Pebble the cloud: the body, the eyes, and the layers that weather, time of day and moods switch on.
    The state lives on <body> as data-weather, data-time and data-mood, so every cloud on screen agrees. */
 
 const CLOUD = () => `<svg class="cloud mira" viewBox="-12 -24 124 128" aria-hidden="true">

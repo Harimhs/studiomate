@@ -1,9 +1,9 @@
 'use strict';
-/* Mira: a sample-swatch companion who lives in the corner. She knows the day's work, writes messages,
+/* Pebble: a small cloud companion. It knows the day's work, writes messages,
    gives design ideas through Gemini, and proposes actions that only happen when the designer taps them.
    Also here: how the app feels (swipe a follow-up, soft screen changes, a small vibration on success). */
 
-/* ---------- Mira herself: an original drawing, coloured by the screen ---------- */
+/* ---------- Pebble itself: an original drawing, coloured by the screen ---------- */
 const MIRA_ICON = CLOUD;
 
 let miraLog = [];   // this session's conversation
@@ -18,7 +18,7 @@ function roamBounds() {
 }
 function cloudInit() {
   if ($('#cloud')) return;
-  document.body.insertAdjacentHTML('beforeend', `<button id="cloud" class="roam" aria-label="Ask Mira, your assistant">${CLOUD()}</button>`);
+  document.body.insertAdjacentHTML('beforeend', `<button id="cloud" class="roam" aria-label="Ask Pebble, your assistant">${CLOUD()}</button>`);
   const el = roam.el = $('#cloud');
   // first spot once the page has a size: bottom right, or where she last left it
   const home = () => {
@@ -182,7 +182,7 @@ function miraNudge() {
   const td = S.followups.some(f => isOpen(f) && bucket(f) === 'today');
   const forced = (location.search.match(/[?&]mood=(\w+)/) || [])[1];   // test switch, like ?sky= and ?tod=
   setMood(forced || (miraBusy ? 'thinking' : h >= 22 || h < 6 ? 'sleepy' : od ? 'worried' : !td ? 'happy' : ''));
-  roam.el && roam.el.setAttribute('aria-label', od ? 'Ask Mira. Something is overdue.' : 'Ask Mira, your assistant');
+  roam.el && roam.el.setAttribute('aria-label', od ? 'Ask Pebble. Something is overdue.' : 'Ask Pebble, your assistant');
 }
 function cheer() { moodHold = Date.now() + 4500; setMood('happy'); roam.el && roam.el.classList.add('hop'); setTimeout(() => { roam.el && roam.el.classList.remove('hop'); moodHold = 0; miraNudge(); }, 4500); }
 
@@ -212,7 +212,7 @@ async function updateSky() {
 }
 const skyLine = () => sky ? `${WX_WORDS[wxKind(sky)]} in ${sky.place}, ${Math.round(sky.temp)}°` : '';
 
-/* what Mira knows: a short summary of the designer's own data */
+/* what Pebble knows: a short summary of the designer's own data */
 function contextFor() {
   const t = today();
   const fu = openFollowups().slice(0, 25).map(f => `- ${f.title} | ${contact(f.contactId)?.name || 'no contact'} | ${site(f.siteId)?.name || 'no site'} | due ${f.due}${f.due < t ? ' (OVERDUE)' : ''}`).join('\n');
@@ -233,12 +233,12 @@ function openMira() {
   const td = S.followups.filter(f => isOpen(f) && bucket(f) === 'today');
   const hello = miraLog.length ? '' : `<div class="msg mira-msg">Hi${name ? ' ' + esc(name) : ''}! ${od.length ? `${od.length} thing${od.length > 1 ? 's are' : ' is'} overdue${od[0] ? `, starting with <b>${esc(od[0].title)}</b>` : ''}.` : td.length ? `You have ${td.length} follow-up${td.length > 1 ? 's' : ''} today.` : 'Nothing is waiting on you right now.'} What can I do?</div>`;
   const chips = ['What’s pending today?', 'Write a Tamil reminder for my oldest follow-up', 'Ideas for a small pooja unit', 'Which vendor is usually late?'];
-  openSheet(`<div class="mira-head">${MIRA_ICON()}<div><h2>Mira</h2><p class="meta">${skyLine() ? esc(skyLine()) + ' · ' : ''}${aiKey() ? 'Your studio assistant' : 'AI isn’t connected yet; I can still tell you what’s due'}</p></div></div>
+  openSheet(`<div class="mira-head">${MIRA_ICON()}<div><h2>Pebble</h2><p class="meta">${skyLine() ? esc(skyLine()) + ' · ' : ''}${aiKey() ? 'Your studio assistant' : 'AI isn’t connected yet; I can still tell you what’s due'}</p></div></div>
     <div class="chat" id="chat">${hello}${miraLog.map(m => msgHtml(m)).join('')}</div>
     <div class="chips chat-chips">${chips.map(c => `<button type="button" class="chip" data-ask="${esc(c)}">${esc(c)}</button>`).join('')}</div>
     <form id="miraForm" class="chat-input" autocomplete="off">
-      <button type="button" class="btn round" id="miraMic" aria-label="Speak to Mira">${I.mic}</button>
-      <input id="miraQ" placeholder="Ask Mira anything" aria-label="Message Mira">
+      <button type="button" class="btn round" id="miraMic" aria-label="Speak to Pebble">${I.mic}</button>
+      <input id="miraQ" placeholder="Ask Pebble anything" aria-label="Message Pebble">
       <button class="btn round primary" aria-label="Send">${I.send}</button>
     </form>`, card => {
     card.classList.add('mira-sheet');
@@ -285,8 +285,8 @@ async function ask(q) {
   vibe(6);
 }
 async function miraThink(q) {
-  const history = miraLog.slice(-8, -1).map(m => `${m.role === 'user' ? 'Designer' : 'Mira'}: ${m.text}`).join('\n');
-  const prompt = `You are Mira, a warm, brief assistant inside StudioMate, the phone app of a senior interior designer in Chennai who works on full homes.
+  const history = miraLog.slice(-8, -1).map(m => `${m.role === 'user' ? 'Designer' : 'Pebble'}: ${m.text}`).join('\n');
+  const prompt = `You are Pebble, a warm, brief assistant inside StudioMate, the phone app of a senior interior designer in Chennai who works on full homes.
 Answer in 1-4 short sentences unless asked for more. Use the designer's data below; never invent vendors, prices or dates that are not there. If she writes in Tamil or Tanglish, reply the same way.
 When she clearly asks to remember, add or chase something, propose an action. Actions are only suggestions until she taps them: never say you have saved, set or sent anything; say “Tap Add to save it” or “Tap Open WhatsApp to send it”. If she asks for Tamil, write the message in Tamil script; use Tanglish only if she asks for Tanglish. When she asks you to write a message to a vendor or client, put the full message text in the action's "text" and name the contact. Dates are YYYY-MM-DD.
 ${contextFor()}
@@ -391,7 +391,7 @@ ACT.settings = () => {
   const card = $('.sheet-card');
   const anchor = card && [...$$('.glabel', card)].find(g => g.textContent.trim() === 'Your data');
   if (!anchor) return;
-  anchor.insertAdjacentHTML('beforebegin', `<label class="check" style="margin-top:18px"><input type="checkbox" id="stCloud" ${LS.get('cloudStill', false) ? '' : 'checked'}> Let Mira the cloud wander around the screen</label>`);
+  anchor.insertAdjacentHTML('beforebegin', `<label class="check" style="margin-top:18px"><input type="checkbox" id="stCloud" ${LS.get('cloudStill', false) ? '' : 'checked'}> Let Pebble the cloud wander around the screen</label>`);
   $('#stCloud', card).onchange = e => { LS.set('cloudStill', !e.target.checked); if (!e.target.checked) LS.set('cloudPos', { x: roam.x, y: roam.y }); };
 };
 I.send = svg('<path d="M4.5 12 19.5 5l-4 14-3.5-5.5z"/><path d="m12 13.5 7.5-8.5"/>');
