@@ -553,3 +553,30 @@ for (const v of ['library', 'materials']) {
 }
 ACT.goLib = () => { location.hash = '#library'; };
 ACT.goMat = () => { location.hash = '#materials'; };
+
+/* ---------- sample data: a half-built master bedroom with photos, brief and furniture ---------- */
+const sampleBeforeDesign = loadSample;
+loadSample = async function () {
+  await sampleBeforeDesign();
+  if (S.designs.some(d => d.sample)) return;
+  const faces = {};
+  for (const f of ['w1', 'w2', 'w3', 'w4', 'floor', 'ceiling']) {
+    try { const r = await fetch(`sample/${f}.jpg`); if (r.ok) faces[f] = await r.blob(); } catch { /* offline: room without that photo */ }
+  }
+  const items = [
+    { id: 'si1', type: 'bed', name: 'Bed', wall: 'w1', w: 1800, h: 450, d: 2100, e: 0, off: 900, c: '#d8cdb9', finish: '' },
+    { id: 'si2', type: 'wardrobe', name: 'Wardrobe', wall: 'w2', w: 2400, h: 2100, d: 600, e: 0, off: 450, c: '#6b4a33', finish: 'walnut' },
+    { id: 'si3', type: 'loft', name: 'Loft', wall: 'w2', w: 2400, h: 600, d: 600, e: 2100, off: 450, c: '#6b4a33', finish: 'walnut', linked: 'si2' },
+    { id: 'si4', type: 'study', name: 'Study table', wall: 'w3', w: 1200, h: 750, d: 600, e: 0, off: 2400, c: '#b99a72', finish: 'oak' },
+    { id: 'si5', type: 'tv', name: 'TV unit', wall: 'w4', w: 1800, h: 450, d: 400, e: 250, off: 750, c: '#6b4a33', finish: 'walnut' },
+    { id: 'si6', type: 'ceiling', name: 'False ceiling', wall: 'ceiling', w: 0, h: 100, d: 0, e: 0, off: 0, c: '#ffffff', finish: '', b: 600 },
+  ];
+  await save('designs', { id: 'sdr1', name: 'Master bedroom', siteId: 'ss1', L: 3600, W: 3300, H: 2900, faces, tray: [], items,
+    brief: 'Warm, calm master bedroom: walnut wardrobe with loft, bed facing the TV wall, small study corner, cove false ceiling, beige walls.',
+    created: Date.now(), sample: true });
+};
+const removeBeforeDesign = removeSample;
+removeSample = async function () {
+  for (const d of S.designs.filter(x => x.sample)) await remove('designs', d.id);
+  await removeBeforeDesign();
+};

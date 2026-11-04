@@ -68,6 +68,9 @@ const STEPS = [
   { title: 'From photos to drawings', at: () => first('#view .empty', '#view .rooms'), go: () => go('#design'),
     b: ['Drag each photo onto its wall, get a 3D view, then place furniture from your brief.', 'Download the plan and elevations as DXF for AutoCAD, or print them.'] },
 
+  { title: 'A sample room', at: () => $('#cross'), go: () => go('#design/sdr1'),
+    b: ['Six photos of a half-built room, each placed on its wall. Drag one to fix a wrong place.', 'Scroll down for the 3D view, the furniture from the brief and the drawings to download.'] },
+
   // ---- library and samples
   { title: 'Library', at: () => $('.lib-seg'), go: () => go('#library'),
     b: ['Inspiration holds your Pinterest finds and site photos; Samples holds materials.', 'Switch between them here.'] },
