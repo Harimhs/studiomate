@@ -115,6 +115,20 @@ Natural daylight plus warm lighting. No people, no text, no labels, no watermark
   return await (await fetch(`data:${data.mimeType || data.mime_type};base64,${data.data}`)).blob();
 }
 
+/* free fallback: Cloudflare Workers AI draws the room from the brief (not from the photo) */
+async function cfRender(d, face) {
+  const len = wallLen(d, face);
+  const on = d.items.filter(i => i.wall === face);
+  const ceil = d.items.find(i => i.wall === 'ceiling');
+  const list = on.map(i => `${i.finish ? i.finish + ' ' : ''}${i.name.toLowerCase()} ${i.w} mm wide`).join(', ');
+  const prompt = `Photorealistic interior render of one wall of a ${d.name.toLowerCase()} in a home in Chennai, India. Wall ${len} mm long, ${d.H} mm high.` +
+    (list ? ` On this wall: ${list}.` : '') + (ceil ? ' Gypsum false ceiling with warm cove lighting.' : '') +
+    ` Style: ${d.brief || 'contemporary Indian, warm and calm'}. Natural daylight, eye-level view. No people, no text.`;
+  const r = await fetch(`${AI_PROXY}/cf-image`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: prompt.slice(0, 1900) }), signal: AbortSignal.timeout(60000) });
+  if (!r.ok) throw Object.assign(new Error('Free render failed'), { status: r.status });
+  return await r.blob();
+}
+
 /* ---------- the room screen gains AI controls and a Renders section ---------- */
 const designView = views.design;
 views.design = (el, id) => {
@@ -138,7 +152,7 @@ views.design = (el, id) => {
     : !faces.length ? '<p class="hint">Add wall photos above, then render each wall.</p>'
     : `<div class="renders">${faces.map(([f, n]) => `<figure class="render" data-face="${f}">
         <div class="render-img">${d.renders[f] ? `<img src="${URL.createObjectURL(d.renders[f])}" alt="AI render of ${n}"><img class="before" src="${faceUrl(d, f)}" alt="${n} before">` : `<img src="${faceUrl(d, f)}" alt="${n} photo">`}</div>
-        <figcaption><b>${n}</b>${d.renders[f] ? '<small>Hold to see before</small>' : `<small>${d.items.filter(i => i.wall === f).length} items planned</small>`}
+        <figcaption><b>${n}</b>${d.renders[f] ? (d.freeRenders && d.freeRenders[f] ? '<small>Free render from your brief</small>' : '<small>Hold to see before</small>') : `<small>${d.items.filter(i => i.wall === f).length} items planned</small>`}
           <button class="btn small ${d.renders[f] ? '' : 'primary'}" data-act="aiRender" data-id="${f}">${I.spark}${d.renders[f] ? 'Again' : 'Render'}</button>
           ${d.renders[f] ? `<button class="btn small" data-act="saveRender" data-id="${f}">Save</button>` : ''}</figcaption></figure>`).join('')}</div>`}
   </section>`);
@@ -176,10 +190,15 @@ Object.assign(ACT, {
     const label = btn.innerHTML; btn.innerHTML = 'Rendering…';
     try {
       d.renders = d.renders || {};
-      d.renders[face] = await aiRender(d, face);
+      try { d.renders[face] = await aiRender(d, face); }
+      catch (e) {
+        if (e.status !== 'RESOURCE_EXHAUSTED' && e.status !== 'NO_IMAGE') throw e;
+        d.renders[face] = await cfRender(d, face);   // free fallback, drawn from the brief
+        (d.freeRenders = d.freeRenders || {})[face] = true;
+      }
       await save('designs', d);
       render();
-      toast(`${FACE_NAME[face]} rendered`);
+      toast(d.freeRenders && d.freeRenders[face] ? `${FACE_NAME[face]}: free render from your brief` : `${FACE_NAME[face]} rendered`);
     } catch (e) {
       const msg = aiError(e, 'image');
       if (e.status === 'RESOURCE_EXHAUSTED') openSheet(`<h2>Renders need image quota</h2><p class="note">${esc(msg)}</p>

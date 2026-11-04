@@ -23,6 +23,14 @@ export default {
     if (req.method !== 'POST' || !allowed.includes(origin)) return new Response('Forbidden', { status: 403, headers: cors });
 
     const url = new URL(req.url);
+    // free image generation on Cloudflare Workers AI: POST /cf-image {prompt}
+    if (url.pathname === '/cf-image') {
+      const { prompt } = await req.json().catch(() => ({}));
+      if (!prompt || prompt.length > 2000) return new Response('Bad prompt', { status: 400, headers: cors });
+      const out = await env.AI.run('@cf/black-forest-labs/flux-1-schnell', { prompt, steps: 6 });
+      const bytes = Uint8Array.from(atob(out.image), c => c.charCodeAt(0));
+      return new Response(bytes, { headers: { ...cors, 'Content-Type': 'image/jpeg' } });
+    }
     const m = url.pathname.match(/^\/v1beta\/models\/([\w.-]+):generateContent$/);
     if (!m || !MODELS.has(m[1])) return new Response('Not found', { status: 404, headers: cors });
 

@@ -8,3 +8,7 @@ ALLOWED_ORIGINS = "https://harimhs.github.io"
 
 # The Gemini key is NOT stored here. Add it as an encrypted secret:
 #   npx wrangler secret put GEMINI_API_KEY
+
+# Cloudflare Workers AI (free daily allowance) for image generation
+[ai]
+binding = "AI"
